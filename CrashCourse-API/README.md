@@ -15,11 +15,7 @@ By the end of the course, you will have created a simple REST API in C#, that cr
 * curl or Postman installed
 * At least one "Hello World" C# Tutorial completed
 
-## Lesson 1: Creation of an API using Visual Studio 2019 Template
+## Lessons
 
-[lesson1](./Lesson1/README.md)
-
-## Lesson 2: REST API
-
-TODO
-
+* [Lesson 1: Creation of an API using Visual Studio 2019 Template](./Lesson1/README.md)
+* Lesson 2: REST API

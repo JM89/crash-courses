@@ -115,9 +115,10 @@ To Run, Click on the button or F5 key:
 
 ![10](./images/10.png)
 
-If all is well, a console should have started and the browser should have been launched. 
+If all is well, a console has started and the browser has launched. 
 
-![11](./images/11.png)
+![11](./images/11-a.png)
+![11](./images/11-b.png)
 
 **Step 8**: Debug
 

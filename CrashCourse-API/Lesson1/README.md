@@ -151,4 +151,6 @@ Or feel free to use Postman to run the queries.
 
 **Step 10**: CRTL-C in the console application and Enter to stop it 
 
+After stopping, the `https://localhost:5001/weatherforecast` endpoint will not be available anymore.
+
 

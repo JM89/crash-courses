@@ -3,10 +3,11 @@ version: '3.3'
 services:
 
   sql-server:
-    image: mcr.microsoft.com/mssql/server:2019-latest
+    build: 
+      context: ./db
+      dockerfile: Dockerfile
     container_name: sql-server
     environment:
-      - ACCEPT_EULA=Y
       - SA_PASSWORD=VerySecret1234!
     ports:
       - "1433:1433"

@@ -1,4 +1,4 @@
-#  Lesson 2: Creation of a REST API controller
+# Lesson 2: Creation of a REST API controller
 
 ## Description of WeatherForecastController class
 

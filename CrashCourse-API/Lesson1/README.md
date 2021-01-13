@@ -1,4 +1,4 @@
-#  Lesson 1: Creation of an API using Visual Studio 2019 Template
+# Lesson 1: Creation of an API using Visual Studio 2019 Template
 
 Visual Studio 2019 (VS) is an IDE (Integrated development environment) and an essential tool in the life of the developer. It is designed to make your life easy and fast. Very fast. 
 

@@ -107,6 +107,12 @@ To Build, Build menu > Build Solution, but you better use the shortcut from now.
 
 ![09](./images/09.png)
 
+When the code is built, if you check the root folder of your project, you will notice two new folders `bin` and `obj`. `obj`is a temporary folder to store object files during compilation, but `bin` is particularly important. It contains the final binaries (DLLs and EXE) and your appsettings for your application and this is the set of files which will be later deployed (copied over) in prod environment. 
+![09a](./images/09-a.png)
+
+There is two main configurations for your build, "Debug" (eg. `bin\Debug\netcoreapp3.1`) and "Release". As the name suggested, "Debug" will let you debug your application in local and contains extra files (such as .pdb) for allowing a friendly experience with the debugger. "Release" will be used when deploying into an actual server.
+![09b](./images/09-b.png)
+
 If no syntax issue, then you are good to run. 
 
 **Step 7**: Run

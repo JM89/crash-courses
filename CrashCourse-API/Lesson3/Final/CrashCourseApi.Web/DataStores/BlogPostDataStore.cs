@@ -1,4 +1,5 @@
 ﻿using CrashCourseApi.Web.Models;
+using Dapper;
 using System.Collections.Generic;
 using System.Data.SqlClient;
 
@@ -18,28 +19,13 @@ namespace CrashCourseApi.Web.DataStores
 
         public IEnumerable<BlogPost> SelectAll()
         {
-            var blogPosts = new List<BlogPost>();
-
-            var conn = new SqlConnection("Data Source=localhost,1433;Initial Catalog=CrashCourseDB;User ID=sa;Password=VerySecret1234!");
-            conn.Open();
-
-            var command = new SqlCommand("Select BlogPostId, Title, Content, CreationDate from [BlogPost]", conn);
-            using (var reader = command.ExecuteReader())
+            IEnumerable<BlogPost> blogPosts = null;
+            using (var conn = new SqlConnection("Data Source=localhost,1433;Initial Catalog=CrashCourseDB;User ID=sa;Password=VerySecret1234!"))
             {
-                while (reader.Read())
-                {
-                    var blogPost = new BlogPost()
-                    {
-                        Id = reader.GetInt32(0),
-                        Title = reader.GetString(1),
-                        Content = reader.GetString(2),
-                        CreationDate = reader.GetDateTime(3)
-                    };
-                    blogPosts.Add(blogPost);
-                }
-            }
+                blogPosts = conn.Query<BlogPost>("Select BlogPostId as Id, Title, Content, CreationDate from [BlogPost]").AsList();
 
-            conn.Close();
+                conn.Close();
+            }
             return blogPosts;
         }
 

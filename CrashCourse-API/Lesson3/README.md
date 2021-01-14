@@ -141,7 +141,7 @@ Then search for `System.Data.SqlClient` and Install (accept the dependencies):
 
 ![05](./images/05.png)
 
-We look at the SelectAll method first: 
+In the `BlogPostDataStore.cs`, we look at the SelectAll method first: 
 
 ```csharp
 public IEnumerable<BlogPost> SelectAll()
@@ -213,12 +213,44 @@ curl -X GET https://localhost:5001/api/blogpost
 
 **Step 5**: Code refactoring
 
-Two improvements can be done to this code before we carry on:
-* We will move the connection strings to the appSettings (environment specific variable)
-* We will use an ORM to simplify the code. 
+Two improvements can be done to this code before we carry on the features.. We are going:
+* to move the connection strings to the appSettings (environment specific variable)
+* to use an ORM to simplify the code. 
 
-[Dapper ORM Library](https://github.com/StackExchange/Dapper) is an abstraction of the [System.Data.SqlClient.SqlConnection](https://docs.microsoft.com/en-us/dotnet/api/system.data.sqlclient.sqlconnection?view=dotnet-plat-ext-5.0&viewFallbackFrom=netcore-3.1).
+[Dapper ORM Library](https://github.com/StackExchange/Dapper) is an abstraction of the [System.Data.SqlClient.SqlConnection](https://docs.microsoft.com/en-us/dotnet/api/system.data.sqlclient.sqlconnection?view=dotnet-plat-ext-5.0&viewFallbackFrom=netcore-3.1). ORM stands for Object-relational mapping and is used to map C# Classes and SQL Entities. 
 
 In Oriented Object Programming (OOP), an abstraction handles the complexity of a class or library by hiding unnecessary details from the developer.
 
-TODO
+C# Classes and SQL Entities can differ in format, for instance, the identifier of our BlogPost class is called `Id` while the SQL Table defines it as `BlogPostId`. There could be also some differences between the C# types (eg. double) and SQL types (eg. DECIMAL(18,5)). If different team owns the application and the database, you will end up with more than a few differences, each might follow their own standards. The "mapping" can become more complex in this situation. This is common practice to use an ORM to avoid writing a lot of mapping of code. Dapper is one. The Microsoft's favorite is its EntityFramework. NHibernate was quite popular few years back too. 
+
+To start using Dapper, add the nuget package `Dapper`. 
+
+In the `BlogPostDataStore.cs`, we look another look at the SelectAll method first: 
+
+```csharp
+public IEnumerable<BlogPost> SelectAll()
+{
+    // declare the list of BlogPost
+    IEnumerable<BlogPost> blogPosts = null;
+
+    // using {} will be in charge of opening, closing and disposing the transaction
+    using (var conn = new SqlConnection("Data Source=localhost,1433;Initial Catalog=CrashCourseDB;User ID=sa;Password=VerySecret1234!"))
+    {
+        // Query the database
+        // for each row read from the SQL SELECT,
+        // new BlogPost object
+        // and the final list of BlogPost is return by the Query function
+        blogPosts = conn.Query<BlogPost>("Select BlogPostId as Id, Title, Content, CreationDate from [BlogPost]").AsList();
+
+        // explicitly closing
+        conn.Close();
+    }
+    return blogPosts;
+}
+```
+
+We can build and run the application to test the access to the database.
+
+```
+curl -X GET https://localhost:5001/api/blogpost
+```

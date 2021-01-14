@@ -11,23 +11,6 @@ namespace CrashCourseApi.Web.Controllers
     [ApiController]
     public class BlogPostController : ControllerBase
     {
-        private static readonly List<BlogPostResponse> blogPosts = new List<BlogPostResponse> {
-                new BlogPostResponse()
-                {
-                    Id = 1,
-                    Title = "Best practices for writing C# code",
-                    Content = "Blah",
-                    CreationDate = new System.DateTime(2021, 1, 11)
-                },
-                new BlogPostResponse()
-                {
-                    Id = 2,
-                    Title = "How to design a distributed system properly",
-                    Content = "Blah",
-                    CreationDate = new System.DateTime(2021, 1, 12)
-                }
-            };
-
         private readonly IBlogPostDataStore _blogPostDataStore;
 
         public BlogPostController(IBlogPostDataStore blogPostDataStore)
@@ -53,45 +36,48 @@ namespace CrashCourseApi.Web.Controllers
         [HttpGet("{id}")]
         public BlogPostResponse Get(int id)
         {
-            return blogPosts.SingleOrDefault(x => x.Id == id);
+            var blogPostEntity = _blogPostDataStore.SelectById(id);
+            if (blogPostEntity == null)
+            {
+                return null;
+            }    
+            return new BlogPostResponse()
+            {
+                Id = blogPostEntity.Id,
+                Title = blogPostEntity.Title,
+                Content = blogPostEntity.Content,
+                CreationDate = blogPostEntity.CreationDate
+            };
         }
 
         // POST api/<BlogPostController>
         [HttpPost]
         public void Post([FromBody] BlogPostRequest value)
         {
-            var blogPost = new BlogPostResponse()
-            {
-                Id = blogPosts.Max(x => x.Id) + 1,
+            _blogPostDataStore.Insert(new BlogPost() {
                 Title = value.Title,
                 Content = value.Content,
                 CreationDate = DateTime.UtcNow
-            };
-
-            blogPosts.Add(blogPost);
+            });
         }
 
         // PUT api/<BlogPostController>/5
         [HttpPut("{id}")]
         public void Put(int id, [FromBody] BlogPostRequest value)
         {
-            var blogPost = blogPosts.SingleOrDefault(x => x.Id == id);
-            if (blogPost != null)
+            _blogPostDataStore.Update(new BlogPost()
             {
-                blogPost.Title = value.Title;
-                blogPost.Content = value.Content;
-            }
+                Id = id,
+                Title = value.Title,
+                Content = value.Content
+            });
         }
 
         // DELETE api/<BlogPostController>/5
         [HttpDelete("{id}")]
         public void Delete(int id)
         {
-            var blogPost = blogPosts.SingleOrDefault(x => x.Id == id);
-            if (blogPost != null)
-            {
-                blogPosts.Remove(blogPost);
-            }
+            _blogPostDataStore.Delete(id);
         }
     }
 }

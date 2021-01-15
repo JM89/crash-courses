@@ -18,11 +18,14 @@ Principle of refactoring
 Hard-coded
 
 Service & DAL Layers & Standards
-
-REST API
 Dependency Injection (Inversion of Control)
+SOLID
 
+Architecture choices
+REST API
 RDBMS vs NoSQL
+
+Nuget
 
 **Next challenge**: from the Final solution in Lesson 4,   
 * Create a new CategoryBlogPost API Controller, Service, DataStore, Table and Unit Test

@@ -15,6 +15,7 @@ By the end of the course, you will have created a simple REST API in C#, that cr
     - If another version of the SDK is installed, syntax/template might be different
 * Docker is installed
 * curl or Postman installed
+    - Postman collection to import: [postman_collection.json](./postman_collection.json)
 * At least one "Hello World" C# Tutorial completed
 
 ## Lessons

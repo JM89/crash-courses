@@ -469,3 +469,10 @@ And this concludes our Lesson 3!
 
 The API is now doing what we expect it to be doing.. when we are passing it valid data. 
 Reality stricks back on Lesson 4, we are going to cover the un-happy scenarios.
+
+**Step 8**: Stop your local DB server
+
+Go to the ./Prep folder and in a console, run the following command: 
+```
+docker-compose down
+```

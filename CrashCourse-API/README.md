@@ -23,4 +23,6 @@ By the end of the course, you will have created a simple REST API in C#, that cr
 * [Lesson 1: Creation of an API using Visual Studio 2019 Template](./Lesson1/README.md)
 * [Lesson 2: Creation of a REST API controller](./Lesson2/README.md)
 * [Lesson 3: Storing data in a relational database and Data Access Layer](./Lesson3/README.md)
-* [Lesson 4: Dealing with the unhappy scenarios](./Lesson4/README.md) - WIP
+* [Lesson 4: Dealing with the unhappy scenarios](./Lesson4/README.md)
+* [Lesson 5: Service Layer, Unit Testing & Dependency Injection](./Lesson5/README.md)
+* [Final Words](./FINAL.md)

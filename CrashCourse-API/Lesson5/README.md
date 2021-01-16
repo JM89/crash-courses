@@ -252,6 +252,247 @@ Since it is a rather complex requirement, we are going to proceed by steps and t
 
 Unit tests will come handy very quickly, but first, we need to create a new project. There are several test frameworks that can be used, we will use XUnit. 
 
-TODO:
+Create a new project:
+
+![01](./images/01.png)
+
+Search for the XUnit Project:
+
+![02](./images/02.png)
+
+Name the project `CrashCourseApi.UnitTests` and Create.
+
+![03](./images/03.png)
+
+Go to Test Explorer: 
+
+![04](./images/04.png)
+
+And run the empty test:
+
+![05](./images/05.png)
+
+Add a Project Reference:
+
+![06](./images/06.png)
+
+And include your project: 
+
+![07](./images/07.png)
+
+Add `Moq` nuget package
+
+Rename UnitTest1.cs to BlogPostServiceTests.cs and copy the following base code:
+
+```csharp
+public class BlogPostServiceTests
+{
+    private readonly Mock<IBlogPostDataStore> _mockBlogPostDataStore;
+    private readonly Mock<ILogger> _mockLogger;
+
+    private IBlogPostService _service;
+
+    public BlogPostServiceTests()
+    {
+        // Constructor is mocking the dependencies
+        _mockBlogPostDataStore = new Mock<IBlogPostDataStore>();
+        _mockLogger = new Mock<ILogger>();
+
+        _service = new BlogPostService(_mockBlogPostDataStore.Object, _mockLogger.Object);
+    }
+
+    [Fact]
+    public void ShouldGetById()
+    {
+        // When the service is called, the database was not called
+        var result = _service.GetById(1);
+
+        Assert.NotNull(result);
+    }
+}
+```
+
+When running the tests, this should fail: 
+
+![08](./images/08.png)
+
+You can debug your test by right clicking on the test: 
+
+![09](./images/09.png)
+
+The test fails because we haven't yet configured the mock so it does not return any object. Replace the test by this one:
+
+```csharp
+[Fact]
+public void GivenExistingPostBlog_WhenGetByIdCalled_ThenBlogPostReturned()
+{
+    // arrange
+    var mockResult = new BlogPost() { 
+        Title = "Title", 
+        Content = "Lorem ipsum dolor sit amet, essent referrentur mea no, ea perfecto principes vim. No nusquam ancillae cum: IMG:picture1.png. " +
+        "Hendrerit ullamcorper eam ne: picture3.png Malis munere IMG: dolore ne per, verear img:picture.png omnesque quaerendum ei has: IMG:picture2.jpg." +
+        "Quo ex hinc ornatus erroribus, et alii labore pro. Ad sea sint meliore docendi: IMG:picture4.svg. "
+    };
+    _mockBlogPostDataStore
+        .Setup(x => x.SelectById(1)) // Setup the mock's method
+        .Returns(new Tuple<BlogPost, bool>(mockResult, true)); // return the mock result
+
+    // act
+    var result = _service.GetById(1);
+
+    // assert
+    Assert.NotNull(result);
+    Assert.True(result.Item2);
+    Assert.Equal("Title", result.Item1.Title);
+}
+```
+
+* arrange: setup of your test mocks. In my test, we won't access the DB to fetch the item. We have to mock it, then set up the method that will be called to return this mock object. 
+* act: call the service
+* assert: validate the result
+
+As we change our code to implement the requirements, this test should stay green! This will be our reference regression test. 
+
+We can add some more tests to test intermediate steps: this is not truly TDD, but will certainly help to develop the requirements. 
 
 **Step 4**: Implement the requirements
+
+First, we need to add a property `public IEnumerable<string> PictureReferences { get; set; }` to our BlogPost class. 
+
+Second, update the `GetById` in `BlogPostService`:
+
+```csharp
+public Tuple<BlogPost, bool> GetById(int id)
+{
+    // Call datastore 
+    var blogPost = _blogPostDataStore.SelectById(id);
+
+    // If not found, return the object. Controller will return a NotFound response
+    if (blogPost == null)
+        return blogPost;
+
+    // Parse the content to find string
+    var content = blogPost.Item1.Content;
+
+    // Result will be stored here:
+    blogPost.Item1.PictureReferences = new List<string>();
+
+    return blogPost;
+}
+```
+
+Run your test project to check for any regressions. You split your test case:
+
+```csharp
+[Fact]
+public void GivenExistingPostBlog_WhenGetByIdCalled_ThenBlogPostReturned_AndContentContainsPngPicture()
+{
+    // arrange
+    BuildMockBlogPost("IMG:picture1.png");
+
+    // act
+    var result = _service.GetById(1);
+
+    // assert
+    var picture = result.Item1.PictureReferences.ToList();
+    Assert.Single(picture);                   // test if there is 1 item in the list
+    Assert.Equal("picture1.png", picture[0]); // test if the value is correct
+}
+
+[Fact]
+public void GivenExistingPostBlog_WhenGetByIdCalled_ThenBlogPostReturned_AndContentContainsJpgPicture()
+{
+    // arrange
+    BuildMockBlogPost("IMG:picture2.jpg");
+
+    // act
+    var result = _service.GetById(1);
+
+    // assert
+    var picture = result.Item1.PictureReferences.ToList();
+    Assert.Single(picture);                   // test if there is 1 item in the list
+    Assert.Equal("picture2.jpg", picture[0]); // test if the value is correct
+}
+
+[Fact]
+public void GivenExistingPostBlog_WhenGetByIdCalled_ThenBlogPostReturned_AndContentContainsSvgPicture()
+{
+    // arrange
+    BuildMockBlogPost("IMG:picture4.svg");
+
+    // act
+    var result = _service.GetById(1);
+
+    // assert
+    var picture = result.Item1.PictureReferences.ToList();
+    Assert.Empty(picture); 
+}
+
+[Fact]
+public void GivenExistingPostBlog_WhenGetByIdCalled_ThenBlogPostReturned_AndContentContainsPngPictureButNoTag()
+{
+    // arrange
+    BuildMockBlogPost("picture3.png");
+
+    // act
+    var result = _service.GetById(1);
+
+    // assert
+    var picture = result.Item1.PictureReferences.ToList();
+    Assert.Empty(picture);
+}
+
+[Fact]
+public void GivenExistingPostBlog_WhenGetByIdCalled_ThenBlogPostReturned_AndContentContainsPngPictureButTagInLowercase()
+{
+    // arrange
+    BuildMockBlogPost("img:picture3.png");
+
+    // act
+    var result = _service.GetById(1);
+
+    // assert
+    var picture = result.Item1.PictureReferences.ToList();
+    Assert.Empty(picture);
+}
+
+private void BuildMockBlogPost(string content)
+{
+    var mockResult = new BlogPost()
+    {
+        Title = "Title",
+        Content = content
+    };
+    _mockBlogPostDataStore
+        .Setup(x => x.SelectById(1)) // Setup the mock's method
+        .Returns(new Tuple<BlogPost, bool>(mockResult, true)); // return the mock result
+}
+```
+
+In the BlogStoreService, one of the solution can be this implementation:
+
+```csharp
+var content = blogPost.Item1.Content;
+
+// Regex is a library to find patterns in strings
+// This is also the most cryptic library ever. 
+// Use online tool like this one: https://regexr.com/
+var regex = new Regex(@"(IMG:)\w+.png|(IMG:)\w+.jpg");
+var matches = regex.Matches(content);
+
+// foreach matches found in the string
+// replace the IMG: tag by empty string
+// and return it as the list of picture references
+blogPost.Item1.PictureReferences = matches.Select(x => x.Value.Replace("IMG:", ""));
+```
+
+The point of this exercice was to show how a simple requirement could involve many scenarios,  how unit tests could help develop and test for regression. Imagine having to change the requirement now (eg. add jpeg as well) or refactor the regexp pattern, then, you will be glad to have a safeguard! Feel free to challenge yourself finding a better Regexp for our requirement, or choose a different approach entirely!
+
+Final piece of the puzzle, we still need to return this list to the browser:
+- add a `public IEnumerable<string> PictureReferences { get; set; }` into the BlogPostResponse
+- map the PictureReferences property between BlogPost and BlogPostResponse. 
+
+Run your application, create a new BlogPost with the complex content then get it by ID:
+
+![10](./images/10.png)
+

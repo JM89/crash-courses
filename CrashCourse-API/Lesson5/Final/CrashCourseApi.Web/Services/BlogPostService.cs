@@ -3,6 +3,8 @@ using CrashCourseApi.Web.Models;
 using Serilog;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace CrashCourseApi.Web.Services
 {
@@ -29,8 +31,18 @@ namespace CrashCourseApi.Web.Services
 
         public Tuple<BlogPost, bool> GetById(int id)
         {
-            // TODO: Parse the content here
-            return _blogPostDataStore.SelectById(id);
+            var blogPost = _blogPostDataStore.SelectById(id);
+
+            if (blogPost == null)
+                return blogPost;
+
+            var content = blogPost.Item1.Content;
+
+            var regex = new Regex(@"(IMG:)\w+.png|(IMG:)\w+.jpg");
+            var matches = regex.Matches(content);
+            blogPost.Item1.PictureReferences = matches.Select(x => x.Value.Replace("IMG:", ""));
+
+            return blogPost;
         }
 
         public bool Insert(BlogPost blogPost)

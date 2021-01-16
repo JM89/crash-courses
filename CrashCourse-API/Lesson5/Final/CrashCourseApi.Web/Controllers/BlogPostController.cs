@@ -71,7 +71,8 @@ namespace CrashCourseApi.Web.Controllers
                 Id = blogPostEntity.Id,
                 Title = blogPostEntity.Title,
                 Content = blogPostEntity.Content,
-                CreationDate = blogPostEntity.CreationDate
+                CreationDate = blogPostEntity.CreationDate,
+                PictureReferences = blogPostEntity.PictureReferences
             });
         }
 

@@ -1,21 +1,25 @@
 ﻿using CrashCourseApi.Web.DataStores;
 using CrashCourseApi.Web.Models;
+using Serilog;
+using System;
 using System.Collections.Generic;
 
 namespace CrashCourseApi.Web.Services
 {
-    public class BlogPostService: IBlogPostService
+    public class BlogPostService : IBlogPostService
     {
         private readonly IBlogPostDataStore _blogPostDataStore;
+        private readonly ILogger _logger;
 
-        public BlogPostService(IBlogPostDataStore blogPostDataStore)
+        public BlogPostService(IBlogPostDataStore blogPostDataStore, ILogger logger)
         {
             _blogPostDataStore = blogPostDataStore;
+            _logger = logger;
         }
 
-        public void Delete(int id)
+        public bool Delete(int id)
         {
-            _blogPostDataStore.Delete(id);
+            return _blogPostDataStore.Delete(id);
         }
 
         public IEnumerable<BlogPost> GetAll()
@@ -23,20 +27,20 @@ namespace CrashCourseApi.Web.Services
             return _blogPostDataStore.SelectAll();
         }
 
-        public BlogPost GetById(int id)
+        public Tuple<BlogPost, bool> GetById(int id)
         {
-            // Parse the content here
+            // TODO: Parse the content here
             return _blogPostDataStore.SelectById(id);
         }
 
-        public void Insert(BlogPost blogPost)
+        public bool Insert(BlogPost blogPost)
         {
-            _blogPostDataStore.Insert(blogPost);
+            return _blogPostDataStore.Insert(blogPost);
         }
 
-        public void Update(BlogPost blogPost)
+        public bool Update(BlogPost blogPost)
         {
-            _blogPostDataStore.Update(blogPost);
+            return _blogPostDataStore.Update(blogPost);
         }
     }
 }

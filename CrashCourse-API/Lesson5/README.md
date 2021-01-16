@@ -90,10 +90,12 @@ Let's get started:
 
 ```csharp
 private readonly IBlogPostDataStore _blogPostDataStore;
+private readonly ILogger _logger;
 
-public BlogPostService(IBlogPostDataStore blogPostDataStore)
+public BlogPostService(IBlogPostDataStore blogPostDataStore, ILogger logger)
 {
     _blogPostDataStore = blogPostDataStore;
+    _logger = logger;
 }
 ```
 
@@ -103,10 +105,10 @@ public BlogPostService(IBlogPostDataStore blogPostDataStore)
 public interface IBlogPostService
 {
     IEnumerable<BlogPost> GetAll();
-    BlogPost GetById(int id);
-    void Insert(BlogPost blogPost);
-    void Update(BlogPost blogPost);
-    void Delete(int id);
+    Tuple<BlogPost, bool> GetById(int id);
+    bool Insert(BlogPost blogPost);
+    bool Update(BlogPost blogPost);
+    bool Delete(int id);
 }
 ```
 
@@ -116,15 +118,17 @@ public interface IBlogPostService
 public class BlogPostService: IBlogPostService
 {
     private readonly IBlogPostDataStore _blogPostDataStore;
+    private readonly ILogger _logger;
 
-    public BlogPostService(IBlogPostDataStore blogPostDataStore)
+    public BlogPostService(IBlogPostDataStore blogPostDataStore, ILogger logger)
     {
         _blogPostDataStore = blogPostDataStore;
+        _logger = logger;
     }
 
-    public void Delete(int id)
+    public bool Delete(int id)
     {
-        _blogPostDataStore.Delete(id);
+        return _blogPostDataStore.Delete(id);
     }
 
     public IEnumerable<BlogPost> GetAll()
@@ -132,20 +136,20 @@ public class BlogPostService: IBlogPostService
         return _blogPostDataStore.SelectAll();
     }
 
-    public BlogPost GetById(int id)
+    public Tuple<BlogPost, bool> GetById(int id)
     {
         // TODO: Parse the content here
         return _blogPostDataStore.SelectById(id);
     }
 
-    public void Insert(BlogPost blogPost)
+    public bool Insert(BlogPost blogPost)
     {
-        _blogPostDataStore.Insert(blogPost);
+        return _blogPostDataStore.Insert(blogPost);
     }
 
-    public void Update(BlogPost blogPost)
+    public bool Update(BlogPost blogPost)
     {
-        _blogPostDataStore.Update(blogPost);
+        return _blogPostDataStore.Update(blogPost);
     }
 }
 ```
@@ -153,6 +157,8 @@ public class BlogPostService: IBlogPostService
 - Use Service contract instead of DataStore contracts in the controller
 
 ```csharp
+[Route("api/[controller]")]
+[ApiController]
 public class BlogPostController : ControllerBase
 {
     private readonly IBlogPostService _blogPostService;
@@ -162,67 +168,56 @@ public class BlogPostController : ControllerBase
         _blogPostService = blogPostService;
     }
 
+    // GET: api/<BlogPostController>
     [HttpGet]
-    public IEnumerable<BlogPostResponse> Get()
+    public IActionResult Get()
     {
         var blogPostEntities = _blogPostService.GetAll();
 
-        return blogPostEntities.Select(x => new BlogPostResponse() {
-            Id = x.Id, 
-            Title = x.Title,
-            Content = x.Content,
-            CreationDate = x.CreationDate
-        });
+        // handling response
     }
 
+    // GET api/<BlogPostController>/5
     [HttpGet("{id}")]
-    public BlogPostResponse Get(int id)
+    public IActionResult Get(int id)
     {
-        var blogPostEntity = _blogPostService.GetById(id);
-        if (blogPostEntity == null)
-        {
-            return null;
-        }
+        var blogPostEntityResponse = _blogPostService.GetById(id);
 
-        return new BlogPostResponse()
-        {
-            Id = blogPostEntity.Id,
-            Title = blogPostEntity.Title,
-            Content = blogPostEntity.Content,
-            CreationDate = blogPostEntity.CreationDate
-        };
+         // handling response
     }
 
+    // POST api/<BlogPostController>
     [HttpPost]
-    public void Post([FromBody] BlogPostRequest value)
+    public IActionResult Post([FromBody] BlogPostRequest value)
     {
-        var blogPost = new BlogPost()
+        var result = _blogPostService.Insert(new BlogPost()
         {
             Title = value.Title,
             Content = value.Content,
             CreationDate = DateTime.UtcNow
-        };
-
-        _blogPostService.Insert(blogPost);
+        });
+        return result ? Ok() : StatusCode(503);
     }
 
+    // PUT api/<BlogPostController>/5
     [HttpPut("{id}")]
-    public void Put(int id, [FromBody] BlogPostRequest value)
+    public IActionResult Put(int id, [FromBody] BlogPostRequest value)
     {
-        var blogPost = new BlogPost()
+        var result = _blogPostService.Update(new BlogPost()
         {
             Id = id,
             Title = value.Title,
             Content = value.Content
-        };
-
-        _blogPostService.Update(blogPost);
+        });
+        return result ? Ok() : StatusCode(503);
     }
 
+    // DELETE api/<BlogPostController>/5
     [HttpDelete("{id}")]
-    public void Delete(int id)
+    public IActionResult Delete(int id)
     {
-        _blogPostService.Delete(id);
+        var result = _blogPostService.Delete(id);
+        return result ? Ok() : StatusCode(503);
     }
 }
 ```

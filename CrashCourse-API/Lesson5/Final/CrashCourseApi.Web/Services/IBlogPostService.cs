@@ -1,4 +1,5 @@
 ﻿using CrashCourseApi.Web.Models;
+using System;
 using System.Collections.Generic;
 
 namespace CrashCourseApi.Web.Services
@@ -6,9 +7,9 @@ namespace CrashCourseApi.Web.Services
     public interface IBlogPostService
     {
         IEnumerable<BlogPost> GetAll();
-        BlogPost GetById(int id);
-        void Insert(BlogPost blogPost);
-        void Update(BlogPost blogPost);
-        void Delete(int id);
+        Tuple<BlogPost, bool> GetById(int id);
+        bool Insert(BlogPost blogPost);
+        bool Update(BlogPost blogPost);
+        bool Delete(int id);
     }
 }

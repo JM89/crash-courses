@@ -30,9 +30,6 @@ namespace CrashCourseApi.Web
         {
             try
             {
-                // Simulate an exception at start time:
-                var config = Configuration.GetSection("Invalid Config").Value.ToString();
-
                 services.AddSingleton(_logger);
                 services.AddControllers();
                 services.AddSingleton<IBlogPostDataStore, BlogPostDataStore>();

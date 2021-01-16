@@ -1,0 +1,21 @@
+version: '3.3'
+
+services:
+
+  sql-server:
+    build: 
+      context: ./db
+      dockerfile: Dockerfile
+    container_name: sql-server
+    environment:
+      - SA_PASSWORD=VerySecret1234!
+    ports:
+      - "1433:1433"
+
+  seq: 
+    image: datalust/seq
+    container_name: seq
+    environment:
+      - ACCEPT_EULA=Y
+    ports:
+      - "5341:80"

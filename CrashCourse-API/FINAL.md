@@ -1,12 +1,8 @@
-## Final Words
-
-TO WRITE
+## Final Words [draft]
 
 Asynchronous Model
 Dependency Injection
-
-Dependency Injection and Inversion of control are not trivial concept. I won't cover more in this Course: [InversionOfControl](https://martinfowler.com/articles/injection.html#InversionOfControl)
-
+Dependency Injection & Inversion of Control
 
 **Overview of Concepts**:
 

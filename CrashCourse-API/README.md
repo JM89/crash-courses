@@ -25,4 +25,4 @@ By the end of the course, you will have created a simple REST API in C#, that cr
 * [Lesson 3: Storing data in a relational database and Data Access Layer](./Lesson3/README.md)
 * [Lesson 4: Dealing with the unhappy scenarios](./Lesson4/README.md)
 * [Lesson 5: Service Layer, Unit Testing & Dependency Injection](./Lesson5/README.md)
-* [Final Words](./FINAL.md)
+* [Final Words](./FINAL.md-) - To write

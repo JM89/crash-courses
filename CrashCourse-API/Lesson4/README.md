@@ -325,7 +325,7 @@ public Startup(IConfiguration configuration)
 
 In order to test your config, update the connection string to point to an invalid server and run your application:
 
-![11](11.png)
+![11](images/11.png)
 
 Stop the application, and revert the change on the connection string.
 

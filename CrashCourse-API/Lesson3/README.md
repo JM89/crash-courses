@@ -151,9 +151,9 @@ If you follow the instructions and implement the interface, some code will be au
 
 **Step 4**: Define a simple SQL Connection & Commands
 
-The .NET Core Framework proposes `System.Data.SqlClient` library, that we will use at the beginning to describe few notions. We will then replace it by the [Dapper](https://github.com/StackExchange/Dapper) library in Step 4.
+The .NET Core Framework proposes `System.Data.SqlClient` library, that we will use at the beginning to describe few concepts. We will then replace it by the [Dapper](https://github.com/StackExchange/Dapper) library in Step 5.
 
-To install the library, right click on the project, Manage Nuget Packages: 
+To install the library, right click on the project, click "Manage Nuget Packages": 
 
 ![04](./images/04.png)
 
@@ -241,7 +241,7 @@ Two improvements can be done to this code before we carry on the features.. We a
 
 In Oriented Object Programming (OOP), an abstraction handles the complexity of a class or library by hiding unnecessary details from the developer.
 
-C# Classes and SQL Entities can differ in format, for instance, the identifier of our BlogPost class is called `Id` while the SQL Table defines it as `BlogPostId`. There could be also some differences between the C# types (eg. double) and SQL types (eg. DECIMAL(18,5)). If different team owns the application and the database, you will end up with more than a few differences, each might follow their own standards. The "mapping" can become more complex in this situation. This is common practice to use an ORM to avoid writing a lot of mapping of code. Dapper is one. The Microsoft's favorite is its EntityFramework. NHibernate was quite popular few years back too. 
+C# Classes and SQL Entities can differ in naming, structure or property type, for instance, the identifier of our BlogPost class is called `Id` while the SQL Table defines it as `BlogPostId`. There could be also some differences between the C# types (eg. double) and SQL types (eg. DECIMAL(18,5)). If different team owns the application and the database, you will end up with more than a few differences, each might follow their own standards. The "mapping" can become more complex in this situation. This is common practice to use an ORM to avoid writing a lot of mapping of code. Dapper is one. The Microsoft's favorite is its EntityFramework. NHibernate was quite popular few years back too. 
 
 To start using Dapper, add the nuget package `Dapper`. 
 
@@ -485,14 +485,13 @@ curl -k -X GET https://localhost:5001/api/blogpost  # to test the deletion
 
 Now that all our endpoints are looking at the DB, the `blogPosts` variable in the `BlogPostController` can be removed. 
 
-And this concludes our Lesson 3! 
-
-The API is now doing what we expect it to be doing.. when we are passing it valid data. 
-Reality stricks back on Lesson 4, we are going to cover the un-happy scenarios.
-
 **Step 8**: Stop your local DB server
 
 Go to the ./Prep folder and in a console, run the following command: 
 ```
 docker-compose down
 ```
+
+And this concludes our Lesson 3! 
+
+The API is now doing what we expect it to be doing.. when we are passing it valid data... Reality stricks back on Lesson 4, we are going to cover the un-happy scenarios.

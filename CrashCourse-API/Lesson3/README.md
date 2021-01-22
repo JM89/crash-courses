@@ -1,10 +1,10 @@
 # Lesson 3: Storing data in a relational database and Data Access Layer
 
-In the previous lesson, we created a BlogPost API controller with read, create, update and remove blog post of a in-memory list, wiped when the service is stopped. Our next step is to persist the blog post into a database. 
+In the previous lesson, we created a BlogPost API controller to read, create, update and delete blog posts from a list stored in-memory. When the application stops, the in-memory list is wiped out. Our next lesson focus on persisting the blog post into a database. 
 
-When choosing a data storage for an API, we often choose among the two major data models: RDBMS (Relational Database Management System) or NoSQL. For this lesson, we will use a relational DB as they bring interesting concepts to learn (eg. ORM) and are very much in use. That said, we will write the code so the Data Access Layer (DAL) can be modified later. 
+When choosing a data storage for an API, two main data models are considered at least: RDBMS (Relational Database Management System) or NoSQL. Both models have their pros and cons and are very much in use. Relational DB brings interesting concepts to learn so the Blog Post API will store its data in a RDBMS. Nonetheless, we will isolate the code accessing the data storage into separated classes/interfaces, so it can be replaced without affecting the web controllers if we change our mind. These classes/interfaces are responsible for interacting with a database and are forming the Data Access Layer (DAL). 
 
-To simulate a database server, we will use a docker image of SQL Server. The base is extended to include the initial SQL scripts. We use a `docker-compose.yml` just to simplify the build the image and run the container. Docker, as well as SQL Server, can be the topics of separated courses so we won't go into much details here. 
+To simulate a database server, we will use a docker image of SQL Server. The base image is extended to include the initial SQL scripts. We define a `docker-compose.yml` file to define and run the container. Docker, as well as SQL Server, can be the topics of separated courses so we won't go into much details here. 
 
 **Step 1**: Start your local DB server
 
@@ -13,18 +13,21 @@ Go to the ./Prep folder and in a console, run the following command:
 docker-compose up
 ```
 
-As part of the initial scripts, we create a database called `CrashCourseDB`, then we create a table BlogPost that looks like this:
+As part of the initial scripts, we: 
+1) create a database called `CrashCourseDB`, 
+2) create a table BlogPost as described below. The BlogPostId is an auto-generated column (IDENTITY), configured as our primary key (PK). Each row is identified by its primary key. The auto-increment is essentially a counter, which will be incremented for us when we insert rows. A PK identifies a unique item. Another thing to mention is that all columns are mandatory (NOT NULL).
+
 ```sql
 CREATE TABLE BlogPost (
-    BlogId INT NOT NULL IDENTITY(1,1),
+    BlogPostId INT NOT NULL IDENTITY(1,1),
     Title VARCHAR(255) NOT NULL,
     Content NVARCHAR(4000) NOT NULL,
     CreationDate DATETIME NOT NULL
     PRIMARY KEY (BlogId)
 );
 ```
+3) insert two rows as sample data. 
 
-We also insert the two rows:
 ```sql
 INSERT INTO dbo.BlogPost 
 VALUES 
@@ -32,7 +35,7 @@ VALUES
 ('How to design a distributed system properly', 'Blah', GETUTCDATE())
 ```
 
-If you have SQL Server Management Studio (SSMS) installed, go to: 
+If SQL Server Management Studio (SSMS) is installed on your machine, connect to your database using these information: 
 * Server: `localhost,1433`
 * Username: `sa`
 * Password: `VerySecret1234`
@@ -42,17 +45,36 @@ The results should look like:
 
 Our database is now ready. 
 
-**Step 2**: Preparing the DAL 
+**Step 2**: Prepare the DAL 
 
-So far, the code written in the `BlogPostController.cs` class was minimal. Writing code for connecting to a database and transforming the data will require a bit more code. I also mentioned that the code should be easily replaced in case we change our mind and go to a NoSQL solution for storing our data. As a best coding practice, we will almost systematically split the DAL code into separate classes. 
+So far, the code in the `BlogPostController.cs` class is kept minimal but connecting and interacting with the DB will require more code. As a best coding practice, we want our classes to be responsible of a single task (Single Responsibility Principle) and to allow to change implementations easily (RDBMS vs NoSQL) without too much collateral damage. 
 
-As a result, we will fly over some concepts that will be detailed into Lesson 4, such as Dependency Injection (DI).
+As we start decoupling our code, we have to speak briefly of Dependency Injection. DI is a design pattern used to implement IoC (Inversion of Control or Dependency inversion principle. One example of dependency can be found in the WeatherForecastController: ILogger<WeatherForecastController>. Since `ILogger` is in the constructor of our controller, we need this dependency to be created before we create our controller is constructed: this dependency will be intialized and injected into our constructor. 
 
-in "Models", copy the BlogPostResponse class and rename file and class `BlogPost`. 
+Let's take a counter-example: we could have implemented the following code for `WeatherForecastController.cs`. We create an instance of type `ConsoleLogger` inside the constructor and assign it to \_logger variable. Logging is something rather popular, so you can expect many classes will have the same code implemented in their constructors. 
+
+```csharp
+public WeatherForecastController() {
+    _logger = new ConsoleLogger("test", (s, ll) => true, true); 
+}
+```
+
+Immediately I deployed my API, I realize that the ConsoleLogger is filling up the drive of the machine rapidly and that the logs need to be externalized to a logging server instead. Now, I need to replace the ConsoleLogger everywhere its has been defined. Using dependency injection, I could have:  
+- changed the implementation on a single location and reduce risk of breaking something in other places
+- switched implementations based on an environment variable without making the code more complex
+- reused the same instance of ILogging to avoid creating a new object everytime
+- injected a "mock" implementation (instead of the real implementation) to test my controller (See Lesson 5)
+- ...
+
+The setup of services and dependencies is done in the `ConfigureServices` method in `Startup.cs`. C# Interfaces are specially in the context of DI, as they allow to separate the definition of the contracts or what the class should be doing / be responsible for; and the actual implementation. 
+
+Without any further waiting, let's get back to our code to create the DAL. 
+
+In "Models" folder, copy the `BlogPostResponse` class and rename file and class `BlogPost`. 
 
 Next, create a folder `DataStores` in your project.
 
-Create a new item in the `DataStores`, select Interface and call it `IBlogPostDataStore`.
+Create a new item in the `DataStores`, select Interface and call it `IBlogPostDataStore`. An interface defines a contract that a class must implement. 
 
 ![02](./images/02.png)
 
@@ -64,8 +86,6 @@ namespace CrashCourseApi.Web.DataStores
     }
 }
 ```
-
-An interface defines a contract that a class must implement. Interfaces are particularly useful when it comes to DI.
 
 Create a new item in the `DataStores`, select Class and call it `BlogPostDataStore`. Then implements the interface `IBlogPostDataStore` in the `BlogPostDataStore` class.
 

@@ -2,7 +2,7 @@
 
 In the [CrashCourse API](../CrashCourse-API/README.md), we learnt how to build an API from scratch and some basic concept of programming. 
 
-In order to get started quickly and focus on service communication, the ./Prep folder contains the following items:
+In order to get started quickly and focus on service communication, the ./Lesson1/Prep folder contains the following items:
 
 * A VisualStudio solution containing two projects:
     * A lightweight BlogPost API 
@@ -13,7 +13,7 @@ In order to better explain the reasons for using message-based systems, we will 
 
 ## Getting started
 
-To start the docker-compose, go to the ./Prep folder and run the following command to start the container in background:
+To start the docker-compose, go to the ./Lesson1/Prep folder and run the following command to start the container in background:
 
 ```
 docker-compose up -d
@@ -21,7 +21,7 @@ docker-compose up -d
 
 And check SEQ: `http://localhost:5341/#/events`
 
-To start the two APIs, stay in the ./Prep folder 
+To start the two APIs, stay in the ./Lesson1/Prep folder 
 
 ```sh
 dotnet build
@@ -66,3 +66,4 @@ In order to simulate latency and random errors, the Review API contains two conf
 - InducedFailureRateFactor: number between 0 and 100, represents the percentage of failures happening for a given request.
 - InducedLatencyFactor: min duration in seconds to enforce during the call.
 
+As soon as you are familiar with this structure, let's jump to Lesson 1.

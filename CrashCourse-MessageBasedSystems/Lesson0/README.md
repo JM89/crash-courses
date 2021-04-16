@@ -54,8 +54,8 @@ curl -k -X POST https://localhost:5003/api/review -H "Content-Type: application/
 
 ## API Structure
 
-The two APIs are fairly simple. However, if you look at [CrashCourse API Lesson 5](../CrashCourse-API/Lesson5/Final/CrashCourseApi.sln), you might spot a couple of differences:
-* A lot of classes & methods have disappeared: we do not access to a datastorage anymore. These are very simple endpoints doing very simple thing. 
+If you checked the API, you will see that there are fairly simple. If you compare them to [CrashCourse API Lesson 5](../CrashCourse-API/Lesson5/Final/CrashCourseApi.sln), you might spot a couple of differences:
+* A lot of classes & methods have disappeared: we do not access to a datastorage anymore. These are very simple endpoints doing very simple things. 
 * A Settings.cs file and appSettings section have been added: this is in preparation of the specific environment specific configuration that we will add. This file is initialize in the Startup.cs, ConfigureServices method. 
 * The ILogger has been added to the controllers so we can log the requests. 
 * The Review GET endpoint is marked as asynchronous. We will not cover async/await in this crashcourse.
@@ -65,3 +65,4 @@ The two APIs are fairly simple. However, if you look at [CrashCourse API Lesson 
 In order to simulate latency and random errors, the Review API contains two configurations used in the GET endpoint:
 - InducedFailureRateFactor: number between 0 and 100, represents the percentage of failures happening for a given request.
 - InducedLatencyFactor: min duration in seconds to enforce during the call.
+

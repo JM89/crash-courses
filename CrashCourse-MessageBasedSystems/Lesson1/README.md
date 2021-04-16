@@ -1,4 +1,4 @@
-# Lesson 
+# Lesson 1: Introduction to services (de)coupling
 
 - [ ] RPC calls
 - [ ] retries

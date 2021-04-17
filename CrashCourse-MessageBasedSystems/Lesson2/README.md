@@ -1,11 +1,3 @@
-# Lesson 2: Measuring the health of a distributed system
+# Lesson 3: Implementing a background service
 
-## AppMetrics
-
-Measure latency
-Counting errors
-
-## Prometheus/Grafana
-
-
-
+## Hosted service

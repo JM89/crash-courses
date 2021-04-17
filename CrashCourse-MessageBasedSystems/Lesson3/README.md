@@ -1,3 +1,7 @@
-# Lesson 3: Implementing a background service
+# Lesson 4: Sending & Receiving SQS messages
 
-## Hosted service
+## LocalStack Setup
+
+## Sending messages
+
+## Receiving messages

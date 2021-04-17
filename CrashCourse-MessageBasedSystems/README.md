@@ -8,7 +8,7 @@ New to .NET, New to C#.
 
 In the [CrashCourse API](../CrashCourse-API/README.md), we learnt how to build an API from scratch and some basic concept of programming. 
 
-In order to better explain the reasons for using message-based systems, we will first cover the direct communication between two APIs [Lesson 1](../Lesson1/README.md) and its challenges. We will start sending app metrics to a monitoring system (Prometheus/Grafana) [Lesson 2](../Lesson2/README.md). Then, we will use a SQS queue (localstack in docker) to decouple the two, and processing messages by a background service [Lesson 3](../Lesson3/README.md) & [Lesson 4](../Lesson4/README.md).  
+In order to better explain the reasons for using message-based systems, we will first cover the direct communication between two APIs [Lesson 1](../Lesson1/README.md) and its challenges. Then, we will use a SQS queue (localstack in docker) to decouple the two, and processing messages by a background service [Lesson 2](../Lesson2/README.md) & [Lesson 3](../Lesson3/README.md).  
 
 By the end of the course, you will have implemented:
 - an API: sending messages to a SQS queue (localstack in docker)
@@ -25,9 +25,8 @@ By the end of the course, you will have implemented:
 ## Lessons
 
 * [Lesson 1: Introduction to services (de)coupling](./Lesson1/README.md)
-* [Lesson 2: Measuring the health of a distributed system](./Lesson2/README.md)
-* [Lesson 3: Implementing a background service](./Lesson3/README.md)
-* [Lesson 4: Sending & Receiving SQS messages](./Lesson4/README.md)
+* [Lesson 2: Implementing a background service](./Lesson2/README.md)
+* [Lesson 3: Sending & Receiving SQS messages](./Lesson3/README.md)
 
 ## Getting started
 

@@ -1,4 +1,4 @@
-﻿namespace CrashCourseApi.BlogPost.Web
+﻿namespace ReviewApi
 {
     public class Settings
     {

@@ -6,7 +6,7 @@ using Microsoft.Extensions.Hosting;
 using Serilog;
 using System;
 
-namespace CrashCourseApi.Review.Web
+namespace ReviewApi
 {
     public class Startup
     {

@@ -33,9 +33,8 @@ By the end of the course, you will have implemented:
 
 In order to get started quickly and focus on service communication, the ./Lesson1/Prep folder contains the following items:
 
-* A VisualStudio solution containing two projects:
-    * A lightweight BlogPost API 
-    * A lightweight Review API 
+* A VisualStudio solution containing our BlogPost API created in the [CrashCourse API Lesson 5](../CrashCourse-API/Lesson5/Final/CrashCourseApi.sln).
+* A VisualStudio solution containing a lightweight Review API containing a single endpoint.
 * A docker-compose file starting SEQ for logging.
 
 To start the docker-compose, go to the ./Lesson1/Prep folder and run the following command to start the container in background:
@@ -44,51 +43,59 @@ To start the docker-compose, go to the ./Lesson1/Prep folder and run the followi
 docker-compose up -d
 ```
 
-And check SEQ: `http://localhost:5341/#/events`
+Check SEQ: `http://localhost:5341/#/events` and the SQL Server `localhost,1433` with SSMS.
 
-To start the two APIs, stay in the ./Lesson1/Prep folder 
+Open the two solutions `/BlogPost/CrashCourseMessaging.BlogPost.Api.sln` and `Review/CrashCourseMessaging.Review.Api.sln`.
 
-```sh
-dotnet build
-```
-
-Then run in two separated consoles the two projects.
-
-**BlogPost.Api**
-
-```sh
-dotnet run --project ./CrashCourseApi.BlogPost.Web/CrashCourseApi.BlogPost.Web.csproj --configuration Release
-```
-
-There is only one endpoint available: `https://localhost:5001/api/blogpost`.
+The same endpoints are available for the Blog Post API using the Postman collection. Couple of changes were made:
+- The namespaces were renamed
+- The weather forecast controller was removed
+- The Settings class and Settings section in configuration file were added, and configured in Startup class (ConfigureServices).
 
 **Review.Api**
 
-```
-dotnet run --project ./CrashCourseApi.Review.Web/CrashCourseApi.Review.Web.csproj --configuration Release
-```
-
-There are two endpoints available:
-- GET `https://localhost:5003/api/review`
-- POST `https://localhost:5003/api/review`
+Two endpoints are available:
+- GET `https://localhost:5003/api/review` that does nothing.
+- POST `https://localhost:5003/api/review` 
 
 Example of POST (check the logs to see the logged entry):
 ```sh
 curl -k -X POST https://localhost:5003/api/review -H "Content-Type: application/json" --data "{\"blogpostid\": 1, \"reviewers\":[\"jack\", \"matt\", \"steven\"]}"
 ```
 
-**API Structure**
+If you check the class `ReviewController.cs`, you will notice that the POST controller isn't empty. 
 
-If you checked the API, you will see that there are fairly simple. If you compare them to [CrashCourse API Lesson 5](../CrashCourse-API/Lesson5/Final/CrashCourseApi.sln), you might spot a couple of differences:
-* A lot of classes & methods have disappeared: we do not access to a datastorage anymore. These are very simple endpoints doing very simple things. 
-* A Settings.cs file and appSettings section have been added: this is in preparation of the specific environment specific configuration that we will add. This file is initialize in the Startup.cs, ConfigureServices method. 
-* The ILogger has been added to the controllers so we can log the requests. 
-* The Review GET endpoint is marked as asynchronous. We will not cover async/await in this crash course.
+```csharp
+[HttpPost]
+public async Task<IActionResult> Post([FromBody] ReviewRequest request, CancellationToken token)
+{
+    // Log to SEQ
+    _logger.Information("Review POST endpoint called");
 
-**Simulate Latency & Errors**
+    // Simulate a failure based on InducedFailureRateFactor settings
+    if (random.Next(1, 100) < _settings.InducedFailureRateFactor)
+    {
+        // Log to SEQ
+        _logger.Error("Review GET endpoint failed");
+        
+        return UnprocessableEntity("Review GET endpoint failed");
+    }
 
-In order to simulate latency and random errors, the Review API contains two configurations used in the GET endpoint:
+    // Simulate a latency based on InducedLatencyFactor settings
+    await Task.Delay(_settings.InducedLatencyFactor * 1000, token);
+
+    // Transform the request object into a string
+    var flatRequest = JsonConvert.SerializeObject(request);
+
+    return Ok($"Review POST endpoint called with body request {flatRequest}");
+}
+```
+
+In order to simulate latency and random errors, the Review API contains two configurations used in the GET endpoint (appSettings.json):
 - InducedFailureRateFactor: number between 0 and 100, represents the percentage of failures happening for a given request.
 - InducedLatencyFactor: min duration in seconds to enforce during the call.
 
+*Note that the endpoint is marked as asynchronous. We will not cover async/await in this crash course.*
+
 As soon as you are familiar with this structure, let's jump to Lesson 1.
+

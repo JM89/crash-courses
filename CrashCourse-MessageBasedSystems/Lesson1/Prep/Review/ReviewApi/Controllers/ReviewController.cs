@@ -1,12 +1,11 @@
-﻿using CrashCourseApi.Review.Web.Models;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using Serilog;
 using System;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace CrashCourseApi.Review.Web.Controllers
+namespace ReviewApi
 {
     [Route("api/[controller]")]
     [ApiController]
@@ -24,25 +23,27 @@ namespace CrashCourseApi.Review.Web.Controllers
 
         // GET: api/<ReviewController>
         [HttpGet]
-        public async Task<IActionResult> Get()
+        public IActionResult Get()
         {
-            if (random.Next(1, 100) < _settings.InducedFailureRateFactor)
-            {
-                return UnprocessableEntity("Review GET endpoint failed");
-            }
-
-            _logger.Information("Review GET endpoint called");
-            await Task.Delay(_settings.InducedLatencyFactor * 1000);
-            return Ok("Review GET endpoint called");
+            return Ok("Does nothing");
         }
 
         // POST api/<ReviewController>
         [HttpPost]
-        public IActionResult Post([FromBody] ReviewRequest request)
+        public async Task<IActionResult> Post([FromBody] ReviewRequest request, CancellationToken token)
         {
+            _logger.Information("Review POST endpoint called");
+
+            if (random.Next(1, 100) < _settings.InducedFailureRateFactor)
+            {
+                _logger.Error("Review GET endpoint failed");
+                return UnprocessableEntity("Review GET endpoint failed");
+            }
+
+            await Task.Delay(_settings.InducedLatencyFactor * 1000, token);
+
             var flatRequest = JsonConvert.SerializeObject(request);
 
-            _logger.Information("Review POST endpoint called");
             return Ok($"Review POST endpoint called with body request {flatRequest}");
         }
     }

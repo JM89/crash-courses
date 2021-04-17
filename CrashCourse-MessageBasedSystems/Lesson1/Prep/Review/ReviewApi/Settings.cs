@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace CrashCourseApi.Review.Web
+﻿namespace ReviewApi
 {
     public class Settings
     {

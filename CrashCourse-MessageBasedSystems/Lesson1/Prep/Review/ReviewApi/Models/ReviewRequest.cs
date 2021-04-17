@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace CrashCourseApi.Review.Web.Models
+namespace ReviewApi
 {
     public class ReviewRequest
     {

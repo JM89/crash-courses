@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Hosting;
 
-namespace CrashCourseApi.Review.Web
+namespace BlogPostApi
 {
     public class Program
     {

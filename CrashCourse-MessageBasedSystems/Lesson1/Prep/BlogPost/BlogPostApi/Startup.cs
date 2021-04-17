@@ -1,12 +1,15 @@
+using BlogPostApi.Services;
+using CrashCourseApi.Web.DataStores;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using ReviewApi;
 using Serilog;
 using System;
 
-namespace CrashCourseApi.BlogPost.Web
+namespace BlogPostApi
 {
     public class Startup
     {
@@ -18,7 +21,7 @@ namespace CrashCourseApi.BlogPost.Web
                             .ReadFrom.Configuration(configuration)
                             .CreateLogger();
 
-            _logger.Information("{ApplicationName} {Version} starting in ({Environment})", "BlogPost.Api", "1.0.0", Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT"));
+            _logger.Information("{ApplicationName} {Version} starting in ({Environment})", "CrashCourseApi", "1.0.0", Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT"));
         }
 
         public IConfiguration Configuration { get; }
@@ -28,13 +31,14 @@ namespace CrashCourseApi.BlogPost.Web
         public void ConfigureServices(IServiceCollection services)
         {
             try
-            {
-                // Map App Settings
+            {   // Map App Settings
                 var settings = Configuration.GetSection("Settings").Get<Settings>();
                 services.AddSingleton(settings);
 
                 services.AddSingleton(_logger);
                 services.AddControllers();
+                services.AddTransient<IBlogPostService, BlogPostService>();
+                services.AddSingleton<IBlogPostDataStore, BlogPostDataStore>();
             }
             catch(Exception ex)
             {

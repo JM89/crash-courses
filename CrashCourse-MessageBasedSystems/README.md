@@ -37,6 +37,8 @@ In order to get started quickly and focus on service communication, the ./Lesson
 * A VisualStudio solution containing a lightweight Review API containing a single endpoint.
 * A docker-compose file starting SEQ for logging.
 
+### Docker Setup 
+
 To start the docker-compose, go to the ./Lesson1/Prep folder and run the following command to start the container in background:
 
 ```
@@ -45,14 +47,18 @@ docker-compose up -d
 
 Check SEQ: `http://localhost:5341/#/events` and the SQL Server `localhost,1433` with SSMS.
 
-Open the two solutions `/BlogPost/CrashCourseMessaging.BlogPost.Api.sln` and `Review/CrashCourseMessaging.Review.Api.sln`.
+### BlogPost.Api endpoints
+
+Open the solution `/BlogPost/CrashCourseMessaging.BlogPost.Api.sln` and run it.
 
 The same endpoints are available for the Blog Post API using the Postman collection. Couple of changes were made:
 - The namespaces were renamed
 - The weather forecast controller was removed
 - The Settings class and Settings section in configuration file were added, and configured in Startup class (ConfigureServices).
 
-**Review.Api**
+### Review.Api endpoints
+
+Open the solution `/Review/CrashCourseMessaging.Review.Api.sln` and run it.
 
 Two endpoints are available:
 - GET `https://localhost:5003/api/review` that does nothing.

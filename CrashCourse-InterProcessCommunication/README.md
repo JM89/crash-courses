@@ -27,6 +27,7 @@ By the end of the course, you will have implemented:
 * [Lesson 1: Introduction to services (de)coupling](./Lesson1/README.md)
 * [Lesson 2: Implementing a background service](./Lesson2/README.md)
 * [Lesson 3: Sending & Receiving SQS messages](./Lesson3/README.md)
+* [Lesson 4: Bonus - Monitoring Application Metrics](./Lesson4/README.md)
 
 ## Getting started
 

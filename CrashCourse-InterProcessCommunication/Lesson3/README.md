@@ -1,4 +1,4 @@
-# Lesson 4: Sending & Receiving SQS messages
+# Lesson 3: Sending & Receiving SQS messages
 
 ## LocalStack Setup
 

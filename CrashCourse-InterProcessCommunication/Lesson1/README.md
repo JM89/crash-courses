@@ -486,6 +486,8 @@ Through out the lesson, you could see that there is a strong dependency between 
 
 In a real life project, these two services could be handled by different teams and their infrastructure and application deployment strategy could vary. The Review API could be called by other services and get congested. The contract (ReviewRequest) could change without communication. Maybe the traffic has increased in Blog Post API, and Review API is not scaled to manage the load. 
 
+Specially because you can't rollback easily a request (like you would do with SQL Transactions in Monolith), you want to maximize the health of your API and avoid cascading error from downstream services. 
+
 At the moment, those two services are tightly coupled. You can use a message-based system to decouple those two services.
 
 In a message-based system, you have got a producer sending messages to a queuing system. Then, have one or multiple consumers checking this queueing system for new messages. Depending the providers and their SLAs, the messaging service can propose better scaling option, integrated retries strategy, and be highly available.

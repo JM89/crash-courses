@@ -1,4 +1,4 @@
-# Crash Course: Introduction to Message Based Systems
+# Crash Course: Inter-Process Communication
 
 ## Audience
 

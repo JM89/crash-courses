@@ -20,13 +20,14 @@ By the end of the course, you will have implemented:
     - To check your install, run `dotnet --list-sdk` command
     - If another version of the SDK is installed, syntax/template might be different
 * Docker is installed
+* [AWS Cli](https://awscli.amazonaws.com/AWSCLIV2.msi) is installed (and some understanding of Amazon SQS)
 * [CrashCourse API](./CrashCourse-API/README.md) completed
 
 ## Lessons
 
 * [Lesson 1: Introduction to services (de)coupling](./Lesson1/README.md)
-* [Lesson 2: Implementing a background service](./Lesson2/README.md)
-* [Lesson 3: Sending & Receiving SQS messages](./Lesson3/README.md)
+* [Lesson 2: Sending messages to a SQS queue](./Lesson2/README.md)
+* [Lesson 3: Receiving & Processing messages from a SQS queue](./Lesson3/README.md)
 * [Lesson 4: Bonus - Monitoring Application Metrics](./Lesson4/README.md)
 
 ## Getting started

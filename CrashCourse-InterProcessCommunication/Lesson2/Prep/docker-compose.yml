@@ -1,0 +1,31 @@
+version: '3.3'
+
+services:
+
+  sql-server:
+    build: 
+      context: ./Docker/db
+      dockerfile: Dockerfile
+    container_name: sql-server
+    environment:
+      - SA_PASSWORD=VerySecret1234!
+    ports:
+      - "1433:1433"
+
+  seq: 
+    image: datalust/seq
+    container_name: seq
+    environment:
+      - ACCEPT_EULA=Y
+    ports:
+      - "5341:80"
+
+  localstack:
+    image: localstack/localstack
+    container_name: localstack
+    environment:
+      - SERVICES=
+      - DEFAULT_REGION=eu-west-2
+      - HOSTNAME=localstack
+    ports:
+      - "4566:4566"

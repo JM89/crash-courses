@@ -1,7 +1,2 @@
-# Lesson 3: Sending & Receiving SQS messages
+# Lesson 3: Receiving & Processing messages from a SQS queue
 
-## LocalStack Setup
-
-## Sending messages
-
-## Receiving messages

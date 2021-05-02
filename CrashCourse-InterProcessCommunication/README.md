@@ -8,7 +8,7 @@ New to .NET, New to C#.
 
 In the [CrashCourse API](../CrashCourse-API/README.md), we learnt how to build an API from scratch and some basic concept of programming. 
 
-In order to better explain the reasons for using message-based systems, we will first cover the direct communication between two APIs [Lesson 1](../Lesson1/README.md) and its challenges. Then, we will use a SQS queue (localstack in docker) to decouple the two, and processing messages by a background service [Lesson 2](../Lesson2/README.md) & [Lesson 3](../Lesson3/README.md).  
+In order to better explain the reasons for using message-based systems, we will first cover the direct communication between two APIs [Lesson 1](../Lesson1/README.md) and its challenges. Then, we will use a SQS queue (localstack in docker) to decouple the two, sending messages from Blog Post API in [Lesson 2](../Lesson2/README.md) and processing those by a background service in [Lesson 3](../Lesson3/README.md).  
 
 By the end of the course, you will have implemented:
 - an API: sending messages to a SQS queue (localstack in docker)
@@ -28,7 +28,6 @@ By the end of the course, you will have implemented:
 * [Lesson 1: Introduction to services (de)coupling](./Lesson1/README.md)
 * [Lesson 2: Sending messages to a SQS queue](./Lesson2/README.md)
 * [Lesson 3: Receiving & Processing messages from a SQS queue](./Lesson3/README.md)
-* [Lesson 4: Bonus - Monitoring Application Metrics](./Lesson4/README.md)
 
 ## Getting started
 

@@ -4,7 +4,7 @@ In this lesson, we will rework the Lesson 1 Final BlogPost API solution and send
 
 The [localstack](https://github.com/localstack/localstack) docker image allows to mock/simulate AWS Services. The Prep folder contains a docker-compose.yml file with a base definition for localstack. We will hen configure it to add a SQS queue when the container is initialized.  
 
-## Step 1: Setup of Localstack
+## Setup of Localstack
 
 The `Prep/docker-compose.yml` contains a basic definition of localstack. 
 
@@ -76,7 +76,7 @@ Expected result:
 
 Before we send a message into our SQS, let's do a bit of cleaning in the BlogPost code. 
 
-## Step 2: Refactoring
+## Refactoring
 
 In Lesson 1, our final solution contained a ReviewApiClientService class and IReviewApiClientService interface, that we used in the BlogPostService. 
 
@@ -85,6 +85,8 @@ Now that we want to be able to send the review request to a queue instead of cal
 Restructuring a piece of code without altering the external behavior is called refactoring. This is an important discipline that is used for improving code readability or code optimisation, and helps to prevent accumulating up technical debt. This technique is safely done when a good unit test project is in place to testify that the *external* behavior has indeed not changed. 
 
 We will be refactoring the code of the ReviewApiClientService class. 
+
+### Step 1: Remove the call to the Review API
 
 In the ReviewApiClientService class, Post method, remove the code as followed:
 
@@ -103,6 +105,8 @@ You should still be able to compile like before.
 Note that changing the signature of your constructor didn't break the code thanks to dependency injection, but we won't need the code in `Startup.cs` related to HttpClient, so the IReviewApiClientService injection can be replaced by a simple transient one:
 
 ![](images/05.png)
+
+### Step 2: Rename classes, methods & variables
 
 Make sure you still compile, then Right-click on the ReviewApiClientService file and rename to `ReviewRequestSender`. 
 
@@ -167,17 +171,21 @@ public class BlogPostService : IBlogPostService
 }
 ```
 
+### Step 3: Clean up the settings
+
 Lastly, remove the settings for ReviewApiBaseUrl:
 - in the Settings class, remove `public string ReviewApiBaseUrl { get; set; }`
 - in the appSettings.json, remove `"ReviewApiBaseUrl": "http://localhost:5002"`
 
 Clean up is now done. Let's now send a message to SQS. 
 
-## Step 3: Send a message to SQS
+## Send a message to SQS
 
 Posting a message to SQS is basically a HTTP Call like we did with the Review API, however, the AWS SDK for .NET proposes a .NET Library for each of its services to simplify the writing of requests and handling responses. 
 
 > *A SDK (Software Development Kit) is a complete suite of development tools for a given platform, while a library is a list of functions that you can call in your code.*
+
+### Step 1: Install the dependencies
 
 To install the SQS Library, right click on BlogPostApi project, Manage Nuget Packages and select `AWSSDK.SQS`:
 
@@ -187,10 +195,14 @@ When selecting libraries, you select only the ones you really need. The dependen
 
 ![](images/11.png)
 
+### Step 2: Update the settings
+
 We will need a couple of settings to add in the Settings class and appSettings.json. All of them are strings:
 - **EndpointUrl**: with value `http://localhost:4566`
 - **Account**: with value `000000000000`
 - **QueueName**: with value `request-review-queue`
+
+### Step 3: Define a SQS Client variable
 
 In the ReviewRequestSender class, we will define a SQS Client private variable and inject it into the constructor.  
 
@@ -207,6 +219,8 @@ public ReviewRequestSender(ILogger logger, Settings settings, IAmazonSQS sqsClie
 }
 ```
 
+### Step 4: Configure dependency injection
+
 In the Startup.cs, ConfigureServices method, we will create a new instance of the SqsClient and add it as a singleton like this:
 ```csharp
 // Create config object using the EndpointUrl defined in appSettings
@@ -221,7 +235,9 @@ var sqsClient = new AmazonSQSClient(sqsConfig);
 services.AddSingleton<IAmazonSQS>(sqsClient);
 ```
 
-Then in the SendMessage method: 
+### Step 5: Update the SendMessage method
+
+In the SendMessage method: 
 
 ```csharp
 public bool SendMessage(ReviewRequest request)
@@ -293,6 +309,8 @@ And then call with your object:
 ```csharp
 _sqsClient.SendMessageAsync(sqsRequest)
 ```
+
+### Step 6: Test
 
 With this addition, let's compile and try to add a new BlogPost. 
 

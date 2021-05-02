@@ -239,141 +239,140 @@ Similarly to the setup in Lesson 2 to send SQS messages, we will:
 Give a try by yourself and then check the files:
 
 <details>
-<summary>Worker.cs</summary>
-<p>
+    <summary>Worker.cs</summary>
+    <p>
 
-```c#
-using Amazon.SQS;
-using Microsoft.Extensions.Hosting;
-using Serilog;
-using System;
-using System.Threading;
-using System.Threading.Tasks;
+    ```c#
+    using Amazon.SQS;
+    using Microsoft.Extensions.Hosting;
+    using Serilog;
+    using System;
+    using System.Threading;
+    using System.Threading.Tasks;
 
-namespace RequestReviewProcessor
-{
-    public class Worker : BackgroundService
+    namespace RequestReviewProcessor
     {
-        private readonly ILogger _logger;
-        private readonly IAmazonSQS _sqsClient;
-        private readonly Settings _settings;
-
-        public Worker(ILogger logger, Settings settings, IAmazonSQS sqsClient)
+        public class Worker : BackgroundService
         {
-            _logger = logger;
-            _settings = settings;
-            _sqsClient = sqsClient;
-        }
+            private readonly ILogger _logger;
+            private readonly IAmazonSQS _sqsClient;
+            private readonly Settings _settings;
 
-        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-        {
-            while (!stoppingToken.IsCancellationRequested)
+            public Worker(ILogger logger, Settings settings, IAmazonSQS sqsClient)
             {
-                _logger.Information("Worker running at: {time}", DateTimeOffset.Now);
-                await Task.Delay(1000, stoppingToken);
+                _logger = logger;
+                _settings = settings;
+                _sqsClient = sqsClient;
+            }
+
+            protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+            {
+                while (!stoppingToken.IsCancellationRequested)
+                {
+                    _logger.Information("Worker running at: {time}", DateTimeOffset.Now);
+                    await Task.Delay(1000, stoppingToken);
+                }
             }
         }
     }
-}
-\```
-</p>
+    \```
+    </p>
 </details> 
 
 <details>
-<summary>Settings.cs</summary>
-<p>
+    <summary>Settings.cs</summary>
+    <p>
 
-```c#
-namespace RequestReviewProcessor
-{
-    public class Settings
+    ```c#
+    namespace RequestReviewProcessor
     {
-        public string ServiceName { get; set; }
-
-        public string EndpointUrl { get; set; }
-
-        public string Account { get; set; }
-
-        public string QueueName { get; set; }
-    }
-}
-\```
-</p>
-</details> 
-
-<details>
-<summary>Program.cs</summary>
-<p>
-
-```c#
-using Amazon.SQS;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Serilog;
-
-namespace RequestReviewProcessor
-{
-    public class Program
-    {
-        public static void Main(string[] args)
+        public class Settings
         {
-            CreateHostBuilder(args).Build().Run();
+            public string ServiceName { get; set; }
+
+            public string EndpointUrl { get; set; }
+
+            public string Account { get; set; }
+
+            public string QueueName { get; set; }
         }
-
-        public static IHostBuilder CreateHostBuilder(string[] args) =>
-            Host.CreateDefaultBuilder(args)
-                .ConfigureServices((hostContext, services) =>
-                {
-                    // Configure AppSettings
-                    var settings = hostContext.Configuration.GetSection("Settings").Get<Settings>();
-                    services.AddSingleton(settings);
-
-                    // Configure SEQ Logging
-                    var logger = new LoggerConfiguration()
-                        .ReadFrom.Configuration(hostContext.Configuration)
-                        .CreateLogger();
-                    services.AddSingleton<ILogger>(logger);
-
-                    // Configure SQS Client
-                    services.AddSingleton<IAmazonSQS>(new AmazonSQSClient(new AmazonSQSConfig() { ServiceURL = settings.EndpointUrl }));
-
-                    // Configure Background Service
-                    services.AddHostedService<Worker>();
-                });
     }
-}
-\```
-</p>
-</details> 
+    \```
+    </p>
+    </details> 
 
+    <details>
+    <summary>Program.cs</summary>
+    <p>
+
+    ```c#
+    using Amazon.SQS;
+    using Microsoft.Extensions.Configuration;
+    using Microsoft.Extensions.DependencyInjection;
+    using Microsoft.Extensions.Hosting;
+    using Serilog;
+
+    namespace RequestReviewProcessor
+    {
+        public class Program
+        {
+            public static void Main(string[] args)
+            {
+                CreateHostBuilder(args).Build().Run();
+            }
+
+            public static IHostBuilder CreateHostBuilder(string[] args) =>
+                Host.CreateDefaultBuilder(args)
+                    .ConfigureServices((hostContext, services) =>
+                    {
+                        // Configure AppSettings
+                        var settings = hostContext.Configuration.GetSection("Settings").Get<Settings>();
+                        services.AddSingleton(settings);
+
+                        // Configure SEQ Logging
+                        var logger = new LoggerConfiguration()
+                            .ReadFrom.Configuration(hostContext.Configuration)
+                            .CreateLogger();
+                        services.AddSingleton<ILogger>(logger);
+
+                        // Configure SQS Client
+                        services.AddSingleton<IAmazonSQS>(new AmazonSQSClient(new AmazonSQSConfig() { ServiceURL = settings.EndpointUrl }));
+
+                        // Configure Background Service
+                        services.AddHostedService<Worker>();
+                    });
+        }
+    }
+    \```
+    </p>
+</details> 
 
 <details>
     <summary>appsettings.json</summary>
-        <p>
+    <p>
 
-        ```json
-        {
-            "Settings": {
-                "ServiceName": "RequestReviewProcessor",
-                "EndpointUrl": "http://localhost:4566",
-                "Account": "000000000000",
-                "QueueName": "request-review-queue"
+    ```json
+    {
+        "Settings": {
+            "ServiceName": "RequestReviewProcessor",
+            "EndpointUrl": "http://localhost:4566",
+            "Account": "000000000000",
+            "QueueName": "request-review-queue"
+        },
+        "Serilog": {
+            "WriteTo": [
+            {
+                "Name": "Seq",
+                "Args": { "serverUrl": "http://localhost:5341" }
             },
-            "Serilog": {
-                "WriteTo": [
-                {
-                    "Name": "Seq",
-                    "Args": { "serverUrl": "http://localhost:5341" }
-                },
-                {
-                    "Name": "Console"
-                }
-                ]
+            {
+                "Name": "Console"
             }
-            }
+            ]
+        }
+        }
 
-        \```
+    \```
    </p>
 </details>
 

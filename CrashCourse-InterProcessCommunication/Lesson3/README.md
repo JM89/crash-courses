@@ -112,7 +112,7 @@ In a more pragmatic way, we use base classes to enforce expected structure & beh
 
 When a base class is defined, you can still *override* some of the behavior in the child class and this is what `public virtual` and `protected abstract` methods are for here. All 4 methods can be overriden of BackgroundService can be overriden, but only the `protected abstract ExecuteAsync` MUST be defined. 
 
-### `public` / `protected` access modifiers keywords
+### public/protected access modifiers keywords
 
 So far, we defined private members (variables) and public methods when needed but didn't details what that means. `public`, `protected`, `internal` and `private` are called "access specifiers":
 - `public` members or methods are accessible from outside the class
@@ -147,7 +147,7 @@ You are the one who codes here, so corrupting your own code might not make much 
 
 Don't let opportunity for things to go wrong, use `private` members/methods as a default and only allow access to what you really need to. 
 
-### `virtual` / `abstract` / `override` modifier keywords
+### virtual/abstract/override modifier keywords
 
 The difference betweent the two is as simple as this:
 - Virtual methods have an implementation defined in the base class, and allow the derived classes to override them. 
@@ -239,143 +239,142 @@ Similarly to the setup in Lesson 2 to send SQS messages, we will:
 Give a try by yourself and then check the files:
 
 <details>
-    <summary>Worker.cs</summary>
-    <p>
+<summary>Worker.cs</summary>
+<p>
 
-    ```c#
-    using Amazon.SQS;
-    using Microsoft.Extensions.Hosting;
-    using Serilog;
-    using System;
-    using System.Threading;
-    using System.Threading.Tasks;
+```c#
+using Amazon.SQS;
+using Microsoft.Extensions.Hosting;
+using Serilog;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 
-    namespace RequestReviewProcessor
+namespace RequestReviewProcessor
+{
+    public class Worker : BackgroundService
     {
-        public class Worker : BackgroundService
+        private readonly ILogger _logger;
+        private readonly IAmazonSQS _sqsClient;
+        private readonly Settings _settings;
+
+        public Worker(ILogger logger, Settings settings, IAmazonSQS sqsClient)
         {
-            private readonly ILogger _logger;
-            private readonly IAmazonSQS _sqsClient;
-            private readonly Settings _settings;
+            _logger = logger;
+            _settings = settings;
+            _sqsClient = sqsClient;
+        }
 
-            public Worker(ILogger logger, Settings settings, IAmazonSQS sqsClient)
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        {
+            while (!stoppingToken.IsCancellationRequested)
             {
-                _logger = logger;
-                _settings = settings;
-                _sqsClient = sqsClient;
+                _logger.Information("Worker running at: {time}", DateTimeOffset.Now);
+                await Task.Delay(1000, stoppingToken);
             }
+        }
+    }
+}
+```
+</p>
+</details> 
 
-            protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-            {
-                while (!stoppingToken.IsCancellationRequested)
+<details>
+<summary>Settings.cs</summary>
+<p>
+
+```c#
+namespace RequestReviewProcessor
+{
+    public class Settings
+    {
+        public string ServiceName { get; set; }
+
+        public string EndpointUrl { get; set; }
+
+        public string Account { get; set; }
+
+        public string QueueName { get; set; }
+    }
+}
+```
+</p>
+</details> 
+
+<details>
+<summary>Program.cs</summary>
+<p>
+
+```c#
+using Amazon.SQS;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Serilog;
+
+namespace RequestReviewProcessor
+{
+    public class Program
+    {
+        public static void Main(string[] args)
+        {
+            CreateHostBuilder(args).Build().Run();
+        }
+
+        public static IHostBuilder CreateHostBuilder(string[] args) =>
+            Host.CreateDefaultBuilder(args)
+                .ConfigureServices((hostContext, services) =>
                 {
-                    _logger.Information("Worker running at: {time}", DateTimeOffset.Now);
-                    await Task.Delay(1000, stoppingToken);
-                }
-            }
-        }
+                    // Configure AppSettings
+                    var settings = hostContext.Configuration.GetSection("Settings").Get<Settings>();
+                    services.AddSingleton(settings);
+
+                    // Configure SEQ Logging
+                    var logger = new LoggerConfiguration()
+                        .ReadFrom.Configuration(hostContext.Configuration)
+                        .CreateLogger();
+                    services.AddSingleton<ILogger>(logger);
+
+                    // Configure SQS Client
+                    services.AddSingleton<IAmazonSQS>(new AmazonSQSClient(new AmazonSQSConfig() { ServiceURL = settings.EndpointUrl }));
+
+                    // Configure Background Service
+                    services.AddHostedService<Worker>();
+                });
     }
-    \```
-    </p>
+}
+```
+</p>
 </details> 
 
 <details>
-    <summary>Settings.cs</summary>
-    <p>
+<summary>appsettings.json</summary>
+<p>
 
-    ```c#
-    namespace RequestReviewProcessor
-    {
-        public class Settings
+```json
+{
+    "Settings": {
+        "ServiceName": "RequestReviewProcessor",
+        "EndpointUrl": "http://localhost:4566",
+        "Account": "000000000000",
+        "QueueName": "request-review-queue"
+    },
+    "Serilog": {
+        "WriteTo": [
         {
-            public string ServiceName { get; set; }
-
-            public string EndpointUrl { get; set; }
-
-            public string Account { get; set; }
-
-            public string QueueName { get; set; }
-        }
-    }
-    \```
-    </p>
-    </details> 
-
-    <details>
-    <summary>Program.cs</summary>
-    <p>
-
-    ```c#
-    using Amazon.SQS;
-    using Microsoft.Extensions.Configuration;
-    using Microsoft.Extensions.DependencyInjection;
-    using Microsoft.Extensions.Hosting;
-    using Serilog;
-
-    namespace RequestReviewProcessor
-    {
-        public class Program
-        {
-            public static void Main(string[] args)
-            {
-                CreateHostBuilder(args).Build().Run();
-            }
-
-            public static IHostBuilder CreateHostBuilder(string[] args) =>
-                Host.CreateDefaultBuilder(args)
-                    .ConfigureServices((hostContext, services) =>
-                    {
-                        // Configure AppSettings
-                        var settings = hostContext.Configuration.GetSection("Settings").Get<Settings>();
-                        services.AddSingleton(settings);
-
-                        // Configure SEQ Logging
-                        var logger = new LoggerConfiguration()
-                            .ReadFrom.Configuration(hostContext.Configuration)
-                            .CreateLogger();
-                        services.AddSingleton<ILogger>(logger);
-
-                        // Configure SQS Client
-                        services.AddSingleton<IAmazonSQS>(new AmazonSQSClient(new AmazonSQSConfig() { ServiceURL = settings.EndpointUrl }));
-
-                        // Configure Background Service
-                        services.AddHostedService<Worker>();
-                    });
-        }
-    }
-    \```
-    </p>
-</details> 
-
-<details>
-    <summary>appsettings.json</summary>
-    <p>
-
-    ```json
-    {
-        "Settings": {
-            "ServiceName": "RequestReviewProcessor",
-            "EndpointUrl": "http://localhost:4566",
-            "Account": "000000000000",
-            "QueueName": "request-review-queue"
+            "Name": "Seq",
+            "Args": { "serverUrl": "http://localhost:5341" }
         },
-        "Serilog": {
-            "WriteTo": [
-            {
-                "Name": "Seq",
-                "Args": { "serverUrl": "http://localhost:5341" }
-            },
-            {
-                "Name": "Console"
-            }
-            ]
+        {
+            "Name": "Console"
         }
-        }
+        ]
+    }
+    }
 
-    \```
-   </p>
+```
+</p>
 </details>
-
 
 ### Step 4: Receive messages from the SQS queue
 
@@ -513,68 +512,67 @@ From Lesson 1, Final folder, copy the content of Post method used to call the Re
 Copy the namespaces from the `ReviewApiClientService` and append to the ones in `MessageHandler`: CTRL R+G to remove duplicates and broken references. 
 
 <details>
-    <summary>MessageHandler.cs</summary>
-        <p>
+<summary>MessageHandler.cs</summary>
+<p>
 
-        ```csharp
-        using Newtonsoft.Json;
-        using RequestReviewProcessor.Contracts;
-        using Serilog;
-        using System;
-        using System.Net.Http;
-        using System.Text;
-        using System.Threading;
-        using System.Threading.Tasks;
+```c#
+using Newtonsoft.Json;
+using RequestReviewProcessor.Contracts;
+using Serilog;
+using System;
+using System.Net.Http;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 
-        namespace RequestReviewProcessor.Handlers
+namespace RequestReviewProcessor.Handlers
+{
+    public class MessageHandler : IMessageHandler
+    {
+        private readonly ILogger _logger;
+        private readonly Settings _settings;
+
+        public MessageHandler(ILogger logger, Settings settings)
         {
-            public class MessageHandler : IMessageHandler
-            {
-                private readonly ILogger _logger;
-                private readonly Settings _settings;
-
-                public MessageHandler(ILogger logger, Settings settings)
-                {
-                    _logger = logger;
-                    _settings = settings;
-                }
-
-                public Task<bool> ProcessMessageAsync(ReviewRequest request, CancellationToken cancellationToken)
-                {
-                    _logger.Information("{ServiceName}: Blog Post {BlogPostId} Request Review received", _settings.ServiceName, request.BlogPostId);
-
-                    try
-                    {
-                        var uri = new Uri($"{_settings.ReviewApiBaseUrl}/api/review");
-
-                        var requestBody = new StringContent(
-                            JsonConvert.SerializeObject(request),
-                            Encoding.UTF8,
-                            "application/json"
-                        );
-
-                        var response = _httpClient.PostAsync(uri, requestBody).GetAwaiter().GetResult();
-
-                        var content = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
-
-                        response.EnsureSuccessStatusCode();
-
-                        _logger.Information($"Call succeeded. Content Request: {content}");
-                        return true;
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.Error($"Unknown error {ex.Message}", ex.StackTrace);
-                        throw;
-                    }
-
-                    return Task.FromResult(true);
-                }
-            }
+            _logger = logger;
+            _settings = settings;
         }
 
-        \```
-   </p>
+        public Task<bool> ProcessMessageAsync(ReviewRequest request, CancellationToken cancellationToken)
+        {
+            _logger.Information("{ServiceName}: Blog Post {BlogPostId} Request Review received", _settings.ServiceName, request.BlogPostId);
+
+            try
+            {
+                var uri = new Uri($"{_settings.ReviewApiBaseUrl}/api/review");
+
+                var requestBody = new StringContent(
+                    JsonConvert.SerializeObject(request),
+                    Encoding.UTF8,
+                    "application/json"
+                );
+
+                var response = _httpClient.PostAsync(uri, requestBody).GetAwaiter().GetResult();
+
+                var content = response.Content.ReadAsStringAsync().GetAwaiter().GetResult();
+
+                response.EnsureSuccessStatusCode();
+
+                _logger.Information($"Call succeeded. Content Request: {content}");
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.Error($"Unknown error {ex.Message}", ex.StackTrace);
+                throw;
+            }
+
+            return Task.FromResult(true);
+        }
+    }
+}
+```
+</p>
 </details> 
 
 At this point, the compiler should complain (and tell you what to do): 
@@ -583,18 +581,20 @@ At this point, the compiler should complain (and tell you what to do):
 
 Let's check all errors: 
 
+**ERROR #1:**
 > 'Settings' does not contain a definition for 'ReviewApiBaseUrl' and no accessible extension method 'ReviewApiBaseUrl' accepting a first argument of type 'Settings' could be found (are you missing a using directive or an assembly reference?)
 
 The base URL of Review API is `http://localhost:5002`:
 
 <details>
-    <summary>Solution</summary>
-    <ul>
-        <li>Add a `ReviewApiBaseUrl` string variable in Settings.cs file.</li>
-        <li>Add a `ReviewApiBaseUrl` with value `http://localhost:5002` in `Settings` section in appsettings.json.</li>
-    </ul>
+<summary>Solution</summary>
+<ul>
+    <li>Add a `ReviewApiBaseUrl` string variable in Settings.cs file.</li>
+    <li>Add a `ReviewApiBaseUrl` with value `http://localhost:5002` in `Settings` section in appsettings.json.</li>
+</ul>
 </details> 
 
+**ERROR #2:**
 > The name '_httpClient' does not exist in the current context
 
 We need to inject the HTTP Client like we did for `ReviewApiClientService` (we do not need Polly here, since the retry is handled by SQS so you can skip this configuration).
@@ -611,9 +611,10 @@ services
     {
         client.BaseAddress = new Uri(settings.ReviewApiBaseUrl);
     });
-\```
+```
 </p>
 </details> 
+
 <details>
 <summary>Add HttpClient as private variable and in the constructor of MessageHandler</summary>
 <p>
@@ -629,10 +630,11 @@ public MessageHandler(ILogger logger, Settings settings, HttpClient httpClient)
     _settings = settings;
     _httpClient = httpClient;
 }
-\```
+```
 </p>
 </details> 
 
+**ERROR #3:**
 > Cannot implicitly convert type 'bool' to 'System.Threading.Tasks.Task<bool>'
 
 This issue is due to the async/await behavior that were mentioned earlier in this lesson. 

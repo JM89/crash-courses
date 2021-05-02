@@ -1,6 +1,8 @@
 # Lesson 1: Introduction to services (de)coupling
 
-*Note: If you haven't done yet, get started with the "Getting Started" section in [CrashCourse Message-based system](./CrashCourse-MessageBasedSystems/README.md)*
+*If you haven't done yet, get started with the "Getting Started" section in [CrashCourse Message-based system](./CrashCourse-MessageBasedSystems/README.md)*
+
+## A new business requirement
 
 Consider the following business requirement: 
 
@@ -14,13 +16,13 @@ To give a bit more business context, when a review is submitted, a list of revie
 
 ## Side note: monolithic/microservices & atomic transactions
 
-In a monolithic architecture design, you would probably have a table `Review` defined in the same database that we have already created. When creating a blog post, you would ensure that the `Review` table is also updated as part of the same SQL transactions. This would bring atomicity: if one of the insert in any of the table fails (specially the second one), the whole transaction will be rollbacked and your data kept consistent. 
+In a monolithic architecture design, you would probably have a table `Review` defined in the same database that we have already created. When creating a blog post, you would ensure that the `Review` table is also updated as part of the same SQL transactions. This would bring atomicity: if one of the "insert statement" in any of the table fails (especially the second one), the whole transaction will be rollbacked and your data kept consistent. 
 
-In a microservice architecture design, different business domain are splitted into different services/APIs, potentially coded by a different development team. The downstream services could be reliable, available, scalable, or maybe not. In case of error, rolling back a request is not as easy than in the context of atomic SQL transaction. With distributed systems, there are plenty of inventive ways for things to go wrong in addition of the application bugs and bad resource management (network latency/congestion, infrastructure), so handling failures should be treated as first class citizen. 
+In a microservice architecture design, different business domain is split into different services/APIs, potentially coded by a different development team. The downstream services could be reliable, available, scalable, or maybe not. In case of error, rolling back a request is not as easy as in the context of the atomic SQL transactions. With distributed systems, there are plenty of inventive ways for things to go wrong in addition to the application bugs and bad resource management (network latency/congestion, infrastructure), so handling failures should be treated as a first-class citizen. 
 
-Both approaches have pros and cons. There are plenty of articles on the Internet that compares Monolithic and Microservices architectures, and detailed their characteristics. Often, the microservice approach is favored for large system as the benefits outweight the drawbacks, availability is chosen over consistency. But the adoption requires a shift in the coding experience and beyond, and this should be taken in consideration when choosing an architecture style.
+Both approaches have pros and cons. There are plenty of articles on the Internet that compares Monolithic and Microservices architectures and detailed their characteristics. Often, the microservice approach is favoured for large systems as the benefits outweigh the drawbacks, availability is chosen over consistency. But the adoption requires a shift in the coding experience and beyond, and this should be taken into consideration when choosing an architecture style.
 
-But enough for this side note, I'm taking a microservice approach here for this message-based system crash course, and chose that BlogPost and Review belongs to different domains. The split between BlogPost/Review is rather arbitrary here, in a real project, this would obviously require more thinking. 
+But enough for this side note, I'm taking a microservice approach here to demonstrate communication between service and chose that BlogPost and Review belongs to different domains. The split between BlogPost/Review is rather arbitrary here, in a real project, this would require more thinking. 
 
 ## Calling the Review API directly
 
@@ -46,7 +48,7 @@ public bool Insert(BlogPost blogPost)
 }
 ```
 
-So far, we only call the Data Store layer to insert the item in database. We are going to add the call to our API in this location.
+So far, we only call the Data Store layer to insert the item in the database. We are going to add the call to our API in this location.
 
 ### Step 1: Create a Review Api Client Service
 
@@ -88,9 +90,9 @@ namespace BlogPostApi.Services
 
 ### Step 2: Configure HttpClient Dependency Injection
 
-The base class for HTTP communication between services is the `HttpClient`. Many library have abstracted it away but in our example, we will use a plain one. 
+The base class for HTTP communication between services is the `HttpClient`. Many libraries have abstracted it away but in our example, we will use a plain one. 
 
-First, let's add it to the readonly variable and constructor, like we have done for every dependencies. Since we are at it, lets also include ILogger and Settings. Let's not forget the namespace `System.Net.Http` (using) as well.
+First, let's add it to the readonly variable and the constructor, as we have done for every dependency. Since we are at it, let's also include ILogger and Settings. Let's not forget the namespace `System.Net.Http` (using) as well.
 
 ```csharp
 using Serilog;
@@ -471,27 +473,27 @@ Without too much surprise, our Blog Post API POST request takes now more than 10
 
 ![](images/08.png)
 
-Latency is not just annoying. If you original request (Blog Post POST here) timeouts before the call to Review API timeouts, then you could end up in an inconsistency state. 
+Latency is not just annoying. If your original request (Blog Post POST here) timeouts before the call to Review API timeouts, then you could end up in an inconsistent state. 
 
 ![](images/09.png)
 
 On the example on the left, after the request Blog Post Request timeout, we don't know if the item was created successfully or not: we have a BlogPost item in DB, that may or may not have a review created. 
-On the example on the right, we had a retry strategy in place, first time it failed with timeout but the Review API had actually saved the record. While it retries, the Review API now throw an duplication error (and will fail subsequent retries) and return a failed status despite the Review has been created. 
+On the example on the right, we had a retry strategy in place, first time it failed with a timeout but the Review API had saved the record. While it retries, the Review API now throw a duplication error (and will fail subsequent retries) and return a failed status despite the Review has been created. 
 
-Having False positive or True negative aren't great while investigating issues: you end up having to compare actual stored data and this could be tedious and inefficient. 
+Having False positive or True negative isn't great while investigating issues: you end up having to compare actual stored data and this could be tedious and inefficient.
 
 ## Service coupling vs decoupling
 
-Through out the lesson, you could see that there is a strong dependency between the health of the Blog Post API POST endpoint and the Review API POST endpoint. 
+Throughout the lesson, you could see that there is a strong dependency between the health of the Blog Post API POST service and the Review API POST service. 
 
-In a real life project, these two services could be handled by different teams and their infrastructure and application deployment strategy could vary. The Review API could be called by other services and get congested. The contract (ReviewRequest) could change without communication. Maybe the traffic has increased in Blog Post API, and Review API is not scaled to manage the load. 
+In a real-life project, these two services could be handled by different teams and their infrastructure and application deployment strategy could vary. The Review API could be called by other services and get congested. The contract "ReviewRequest" could change without human communication. Maybe the traffic has increased in Blog Post API, and Review API is not scaled to manage the load. 
 
-Specially because you can't rollback easily a request (like you would do with SQL Transactions in Monolith), you want to maximize the health of your API and avoid cascading error from downstream services. 
+Especially because you can't rollback easily a request (like you would do with SQL Transactions in Monolith), you want to maximize the health of your API and avoid cascading error from downstream services. 
 
 At the moment, those two services are tightly coupled. You can use a message-based system to decouple those two services.
 
-In a message-based system, you have got a producer sending messages to a queuing system. Then, have one or multiple consumers checking this queueing system for new messages. Depending the providers and their SLAs, the messaging service can propose better scaling option, integrated retries strategy, and be highly available.
+In a message-based system, you have got a producer sending messages to a queuing system. Then, you have one or multiple consumers checking this queueing system for new messages. Depending on the providers and their SLAs, the messaging service can propose a better scaling option, integrated retries strategy, and be highly available.
 
-Instead of calling the Review API directly, the Blog Post API can publish/send a message announcing "New review requested" to a queuing system. A background service, whose aims is to check for new message in the queue, will consume/receive the messages and process the request to the Review API. If the Review API fails, then, the worker will retry later for the message.
+Instead of calling the Review API directly, the Blog Post API can publish/send a message announcing "New review requested" to a queuing system. A background service, whose aims is to check for a new message in the queue, will consume/receive the messages and process the request to the Review API. If the Review API fails, then, the worker will retry later for the message.
  
-This way, the health of the Blog Post API would not depend anymore of the Review API! 
+This way, the health of the Blog Post API would not depend anymore on the Review API! 

@@ -651,9 +651,11 @@ There should be no more issue now. Let's just make the information/error log mor
 - `_logger.Information("{ServiceName}: Call succeeded. Content Request: {content}", _settings.ServiceName, content);`
 - `_logger.Error("{ServiceName}: Unknown error {Message}", _settings.ServiceName, ex.Message, ex.StackTrace);`
 
-ProcessMessageAsync should now look like this:
+<details>
+<summary>ProcessMessageAsync method (final)</summary>
+<p>
 
-```csharp
+```c#
 public async Task<bool> ProcessMessageAsync(ReviewRequest request, CancellationToken cancellationToken)
 {
     _logger.Information("{ServiceName}: Blog Post {BlogPostId} Request Review received", _settings.ServiceName, request.BlogPostId);
@@ -684,6 +686,8 @@ public async Task<bool> ProcessMessageAsync(ReviewRequest request, CancellationT
     }
 }
 ```
+</p>
+</details> 
 
 ### Step 7: Start the Review API & Run Worker
 

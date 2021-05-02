@@ -242,7 +242,7 @@ Give a try by yourself and then check the files:
     <summary>Worker.cs</summary>
         <p>
 
-        ```csharp
+        ```c#
         using Amazon.SQS;
         using Microsoft.Extensions.Hosting;
         using Serilog;
@@ -283,7 +283,7 @@ Give a try by yourself and then check the files:
     <summary>Settings.cs</summary>
         <p>
 
-        ```csharp
+        ```c#
         namespace RequestReviewProcessor
         {
             public class Settings
@@ -305,7 +305,7 @@ Give a try by yourself and then check the files:
     <summary>Program.cs</summary>
         <p>
 
-        ```csharp
+        ```c#
         using Amazon.SQS;
         using Microsoft.Extensions.Configuration;
         using Microsoft.Extensions.DependencyInjection;

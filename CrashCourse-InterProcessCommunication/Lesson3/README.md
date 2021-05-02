@@ -239,112 +239,112 @@ Similarly to the setup in Lesson 2 to send SQS messages, we will:
 Give a try by yourself and then check the files:
 
 <details>
-    <summary>Worker.cs</summary>
-        <p>
+<summary>Worker.cs</summary>
+<p>
 
-        ```c#
-        using Amazon.SQS;
-        using Microsoft.Extensions.Hosting;
-        using Serilog;
-        using System;
-        using System.Threading;
-        using System.Threading.Tasks;
+```c#
+using Amazon.SQS;
+using Microsoft.Extensions.Hosting;
+using Serilog;
+using System;
+using System.Threading;
+using System.Threading.Tasks;
 
-        namespace RequestReviewProcessor
+namespace RequestReviewProcessor
+{
+    public class Worker : BackgroundService
+    {
+        private readonly ILogger _logger;
+        private readonly IAmazonSQS _sqsClient;
+        private readonly Settings _settings;
+
+        public Worker(ILogger logger, Settings settings, IAmazonSQS sqsClient)
         {
-            public class Worker : BackgroundService
+            _logger = logger;
+            _settings = settings;
+            _sqsClient = sqsClient;
+        }
+
+        protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+        {
+            while (!stoppingToken.IsCancellationRequested)
             {
-                private readonly ILogger _logger;
-                private readonly IAmazonSQS _sqsClient;
-                private readonly Settings _settings;
-
-                public Worker(ILogger logger, Settings settings, IAmazonSQS sqsClient)
-                {
-                    _logger = logger;
-                    _settings = settings;
-                    _sqsClient = sqsClient;
-                }
-
-                protected override async Task ExecuteAsync(CancellationToken stoppingToken)
-                {
-                    while (!stoppingToken.IsCancellationRequested)
-                    {
-                        _logger.Information("Worker running at: {time}", DateTimeOffset.Now);
-                        await Task.Delay(1000, stoppingToken);
-                    }
-                }
+                _logger.Information("Worker running at: {time}", DateTimeOffset.Now);
+                await Task.Delay(1000, stoppingToken);
             }
         }
-        \```
-   </p>
+    }
+}
+\```
+</p>
 </details> 
 
 <details>
-    <summary>Settings.cs</summary>
-        <p>
+<summary>Settings.cs</summary>
+<p>
 
-        ```c#
-        namespace RequestReviewProcessor
-        {
-            public class Settings
-            {
-                public string ServiceName { get; set; }
+```c#
+namespace RequestReviewProcessor
+{
+    public class Settings
+    {
+        public string ServiceName { get; set; }
 
-                public string EndpointUrl { get; set; }
+        public string EndpointUrl { get; set; }
 
-                public string Account { get; set; }
+        public string Account { get; set; }
 
-                public string QueueName { get; set; }
-            }
-        }
-        \```
-   </p>
+        public string QueueName { get; set; }
+    }
+}
+\```
+</p>
 </details> 
 
 <details>
-    <summary>Program.cs</summary>
-        <p>
+<summary>Program.cs</summary>
+<p>
 
-        ```c#
-        using Amazon.SQS;
-        using Microsoft.Extensions.Configuration;
-        using Microsoft.Extensions.DependencyInjection;
-        using Microsoft.Extensions.Hosting;
-        using Serilog;
+```c#
+using Amazon.SQS;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Serilog;
 
-        namespace RequestReviewProcessor
+namespace RequestReviewProcessor
+{
+    public class Program
+    {
+        public static void Main(string[] args)
         {
-            public class Program
-            {
-                public static void Main(string[] args)
-                {
-                    CreateHostBuilder(args).Build().Run();
-                }
-
-                public static IHostBuilder CreateHostBuilder(string[] args) =>
-                    Host.CreateDefaultBuilder(args)
-                        .ConfigureServices((hostContext, services) =>
-                        {
-                            // Configure AppSettings
-                            var settings = hostContext.Configuration.GetSection("Settings").Get<Settings>();
-                            services.AddSingleton(settings);
-
-                            // Configure SEQ Logging
-                            var logger = new LoggerConfiguration()
-                                .ReadFrom.Configuration(hostContext.Configuration)
-                                .CreateLogger();
-                            services.AddSingleton<ILogger>(logger);
-
-                            // Configure SQS Client
-                            services.AddSingleton<IAmazonSQS>(new AmazonSQSClient(new AmazonSQSConfig() { ServiceURL = settings.EndpointUrl }));
-
-                            // Configure Background Service
-                            services.AddHostedService<Worker>();
-                        });
-            }
+            CreateHostBuilder(args).Build().Run();
         }
-        \```
-   </p>
+
+        public static IHostBuilder CreateHostBuilder(string[] args) =>
+            Host.CreateDefaultBuilder(args)
+                .ConfigureServices((hostContext, services) =>
+                {
+                    // Configure AppSettings
+                    var settings = hostContext.Configuration.GetSection("Settings").Get<Settings>();
+                    services.AddSingleton(settings);
+
+                    // Configure SEQ Logging
+                    var logger = new LoggerConfiguration()
+                        .ReadFrom.Configuration(hostContext.Configuration)
+                        .CreateLogger();
+                    services.AddSingleton<ILogger>(logger);
+
+                    // Configure SQS Client
+                    services.AddSingleton<IAmazonSQS>(new AmazonSQSClient(new AmazonSQSConfig() { ServiceURL = settings.EndpointUrl }));
+
+                    // Configure Background Service
+                    services.AddHostedService<Worker>();
+                });
+    }
+}
+\```
+</p>
 </details> 
 
 
@@ -600,46 +600,38 @@ The base URL of Review API is `http://localhost:5002`:
 
 We need to inject the HTTP Client like we did for `ReviewApiClientService` (we do not need Polly here, since the retry is handled by SQS so you can skip this configuration).
 
-Clue: Add `Microsoft.Extensions.Http` nuget package to avoid troubles.
+Add `Microsoft.Extensions.Http` nuget package to avoid any trouble.
 
 <details>
-    <summary>Solution</summary>
-    <ul>
-        <li>Configure HTTP Client in Program.cs</li>
-        <li>Add HttpClient as private variable and in the constructor of MessageHandler</li>
-    </ul>
-</details> 
+<summary>Configure HTTP Client in Program.cs</summary>
+<p>
 
-<details>
-    <summary>Configure HTTP Client</summary>
-        <p>
-
-        ```csharp
-        services
-            .AddHttpClient<IMessageHandler, MessageHandler>(client =>
-            {
-                client.BaseAddress = new Uri(settings.ReviewApiBaseUrl);
-            });
-        \```
-   </p>
+```c#
+services
+    .AddHttpClient<IMessageHandler, MessageHandler>(client =>
+    {
+        client.BaseAddress = new Uri(settings.ReviewApiBaseUrl);
+    });
+\```
+</p>
 </details> 
 <details>
-    <summary>MessageHandler.cs</summary>
-        <p>
+<summary>Add HttpClient as private variable and in the constructor of MessageHandler</summary>
+<p>
 
-        ```csharp
-        private readonly ILogger _logger;
-        private readonly Settings _settings;
-        private readonly HttpClient _httpClient;
+```c#
+private readonly ILogger _logger;
+private readonly Settings _settings;
+private readonly HttpClient _httpClient;
 
-        public MessageHandler(ILogger logger, Settings settings, HttpClient httpClient)
-        {
-            _logger = logger;
-            _settings = settings;
-            _httpClient = httpClient;
-        }
-        \```
-   </p>
+public MessageHandler(ILogger logger, Settings settings, HttpClient httpClient)
+{
+    _logger = logger;
+    _settings = settings;
+    _httpClient = httpClient;
+}
+\```
+</p>
 </details> 
 
 > Cannot implicitly convert type 'bool' to 'System.Threading.Tasks.Task<bool>'

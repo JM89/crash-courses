@@ -1,8 +1,8 @@
-# Lesson 2: Sending messages to a SQS queue
+# Lesson 2: Sending messages to an Amazon SQS queue
 
-In this lesson, we will rework the Lesson 1 Final BlogPost API solution and send messages to local AWS SQS queue instead of calling directly the Review API. 
+In this lesson, we will rework the Lesson 1 Final BlogPost API solution and send messages to the local Amazon SQS queue instead of calling directly the Review API. 
 
-The [localstack](https://github.com/localstack/localstack) docker image allows to mock/simulate AWS Services. The Prep folder contains a docker-compose.yml file with a base definition for localstack. We will hen configure it to add a SQS queue when the container is initialized.  
+The [localstack](https://github.com/localstack/localstack) docker image allows mocking/simulating AWS Services. The Prep folder contains a docker-compose.yml file with a base definition for "localstack". We will then configure it to add an Amazon SQS queue when the container is initialized.  
 
 ## Setup of Localstack
 
@@ -80,13 +80,11 @@ Before we send a message into our SQS, let's do a bit of cleaning in the BlogPos
 
 In Lesson 1, our final solution contained a ReviewApiClientService class and IReviewApiClientService interface, that we used in the BlogPostService. 
 
-Now that we want to be able to send the review request to a queue instead of calling the API directly, we will do a bit of clean up. The code inside the ReviewApiClientService will change but the external behavior from a user perspective and even from the BlogPostService won't be modified. We will reuse the same *contract* ReviewRequest and the signature of the method Post will stay the same. 
+Now that we want to be able to send the review request to a queue instead of calling the API directly, we will do a bit of clean up. The code inside the ReviewApiClientService will change but the external behaviour from a user perspective and even from the BlogPostService won't be modified. We will reuse the same *contract* ReviewRequest and the signature of the method Post will stay the same. 
 
-Restructuring a piece of code without altering the external behavior is called refactoring. This is an important discipline that is used for improving code readability or code optimisation, and helps to prevent accumulating up technical debt. This technique is safely done when a good unit test project is in place to testify that the *external* behavior has indeed not changed. 
+Restructuring a piece of code without altering the external behaviour is called refactoring. This is an important discipline that is used for improving code readability or code optimisation and helps to prevent accumulating up technical debt. This technique is safely done when a good unit test project is in place to testify that the *external* behaviour has indeed not changed. 
 
 We will be refactoring the code of the ReviewApiClientService class. 
-
-### Step 1: Remove the call to the Review API
 
 In the ReviewApiClientService class, Post method, remove the code as followed:
 
@@ -106,7 +104,7 @@ Note that changing the signature of your constructor didn't break the code thank
 
 ![](images/05.png)
 
-### Step 2: Rename classes, methods & variables
+## Renaming classes, methods & variables
 
 Make sure you still compile, then Right-click on the ReviewApiClientService file and rename to `ReviewRequestSender`. 
 
@@ -128,9 +126,9 @@ Type the new name and Apply:
 
 ![](images/09.png)
 
-Make sure you saved every opened files and you can still compile.
+Make sure you saved every opened file and you can still compile.
 
-In BlogPostService.cs class, you will notice that IReviewRequestSender is used in the constructor and that the method call is SendMessage. Since renaming don't consider variable names, change these by right clicking on the variable name and rename as we did for the method name. 
+In BlogPostService.cs class, you will notice that IReviewRequestSender is used in the constructor and that the method call is SendMessage. Since renaming doesn't consider variable names, change these by right-clicking on the variable name and rename as we did for the method name. 
 
 The constructor and Insert method of BlogPostService should look like this by now:
 
@@ -171,7 +169,7 @@ public class BlogPostService : IBlogPostService
 }
 ```
 
-### Step 3: Clean up the settings
+## Clean up the settings
 
 Lastly, remove the settings for ReviewApiBaseUrl:
 - in the Settings class, remove `public string ReviewApiBaseUrl { get; set; }`
@@ -181,7 +179,7 @@ Clean up is now done. Let's now send a message to SQS.
 
 ## Send a message to SQS
 
-Posting a message to SQS is basically a HTTP Call like we did with the Review API, however, the AWS SDK for .NET proposes a .NET Library for each of its services to simplify the writing of requests and handling responses. 
+Posting a message to SQS is an HTTP Call like we did with the Review API, however, the AWS SDK for .NET proposes a .NET Library for each of its services to simplify the writing of requests and handling responses. 
 
 > *A SDK (Software Development Kit) is a complete suite of development tools for a given platform, while a library is a list of functions that you can call in your code.*
 
@@ -304,7 +302,7 @@ var sqsRequest = new SendMessageRequest() {
 };
 ```
 
-And then call with your object:
+And then call the command with your object as a parameter:
 
 ```csharp
 _sqsClient.SendMessageAsync(sqsRequest)
@@ -314,7 +312,7 @@ _sqsClient.SendMessageAsync(sqsRequest)
 
 With this addition, let's compile and try to add a new BlogPost. 
 
-If your call was successfully, you should now see a message added to your queue:
+If your call was successful, you should now see a message added to your queue:
 
 ```bash
 aws sqs receive-message \

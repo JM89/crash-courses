@@ -1,6 +1,6 @@
 # Lesson 3: Receiving & Processing messages from a SQS queue
 
-In this lesson, we will create a simple background service whose only role will be to listen for messages to come to the queue, and send the Review API in behalf of the BlogPost API. 
+In this lesson, we will create a simple background service whose only role will be to listen for messages to come to the queue and send the Review API on behalf of the BlogPost API. 
 
 Start the `docker-compose` if you haven't done it yet. 
 
@@ -32,13 +32,13 @@ The solution should look like this:
 
 We won't need appsetting.Development.json here, so it can be removed.
 
-There are only two files in this template: `Program.cs` and `Worker.cs`.
+In this template, there are two files: `Program.cs` and `Worker.cs`.
 
-We have already met `Program.cs` in the API projects, with its main method. I recommend you compare the two contents. Here, we do not defined a startup method, and the method ConfigureServices is called directly by the `Host`. Notice that here, *`services.AddHostedService<Worker>();`* is adding our worker class as an hosted service. A single instance of this worker will run in background (in its own *thread*), when our console application is started. This will allow for the worker to listen *continuously* for new messages. 
+We have already met `Program.cs` in the API projects, with its main method. I recommend you compare the two contents. Here, we do not define a Startup class, but the method ConfigureServices is still called by the "Host". Notice that here, *`services.AddHostedService<Worker>();`* is adding our worker class as a hosted service. A single instance of this worker will run in the background (in its *thread*) when our console application is started. This will allow the worker to listen *continuously* for new messages. 
 
 ![](images/06.png)
 
-If you type `services.` and CTRL-Enter, you will notice that you are familiar with the methods propose.  
+If you type `services.` and CTRL-Enter, Intellisense will suggest methods suggested you are already familiar with.
 
 The second class is the Worker:
 
@@ -69,7 +69,7 @@ public class Worker : BackgroundService
 
 The Worker class implements a single method `ExecuteAsync`, which is going to run some code in a loop. This loop runs until a "cancellation token" is requested (when the application is stopped by the user (CTRL+C)).
 
-If you run this application, you will see that its logging an entry every second in the console.
+If you run this application, you will see that it is logging an entry every second in the console.
 
 ![](images/09.png)
 
@@ -108,9 +108,9 @@ To illustrate, let's take a simpler example. Let's say you want to represent int
 
 > *Inheritance often comes with the exotic concept of "polymorphism" but I will let you check an "Oriented Object Programming" course or "Top 100 C# interview questions" instead!*
 
-In a more pragmatic way, we use base classes to enforce expected structure & behaviors for child classes. All classes deriving from BackgroundServices must have some ExecuteAsync content to execute and optionally some start and stop actions: the framework that handles background services behind the scenes knows what to expect of any instances created from a derived class. 
+More pragmatically, we use base classes to enforce expected structure & behaviours for child classes. All classes deriving from BackgroundServices must have some ExecuteAsync content to execute and optionally some start and stop actions: the framework that handles background services behind the scenes knows what to expect of any instances created from a derived class. 
 
-When a base class is defined, you can still *override* some of the behavior in the child class and this is what `public virtual` and `protected abstract` methods are for here. All 4 methods can be overriden of BackgroundService can be overriden, but only the `protected abstract ExecuteAsync` MUST be defined. 
+When a base class is defined, you can still *override* some of the behaviour in the child class and this is what `public virtual` and `protected abstract` methods are for here. All 4 methods in BackgroundService.cs can be overridden, but only the `protected abstract ExecuteAsync` MUST be defined. 
 
 ### public/protected access modifiers keywords
 
@@ -141,19 +141,19 @@ public class BlogPostService : IBlogPostService
 }
 ```
 
-You are the one who codes here, so corrupting your own code might not make much sense. But imagine you have a more complex code and another coder needs to use a different queue URL for another method in another class... (another x3). It does not have to be intentional, if the variable visible, this gives the wrong message that the variable can be modified safely:
+You are the one who codes here, so corrupting your code might not make much sense. But imagine you have a more complex code and another coder needs to use a different queue URL for another method in another class... (another x3). It does not have to be intentional, if the variable visible, this gives the wrong message that the variable can be modified safely:
 
 ![](images/10.png)
 
-Don't let opportunity for things to go wrong, use `private` members/methods as a default and only allow access to what you really need to. 
+Don't let the opportunity for things to go wrong, use `private` members/methods as a default and only allow access to what you need to. 
 
 ### virtual/abstract/override modifier keywords
 
-The difference betweent the two is as simple as this:
-- Virtual methods have an implementation defined in the base class, and allow the derived classes to override them. 
+The difference between the two is as simple as this:
+- Virtual methods have an implementation defined in the base class and allow the derived classes to override them. 
 - Abstract methods do not so that forces the derived classes to provide one.
 
-When a `virtual` and `abstract` method is overriden in the derived class, the keyword `override` must be used:
+When a `virtual` and `abstract` method is overridden in the derived class, the keyword `override` must be used:
 
 ```csharp
 public class Worker : BackgroundService
@@ -174,8 +174,8 @@ public class Worker : BackgroundService
 
 ### Step 1: Replace the logging library
 
-In the BlogPost API we used the Serilog library for logging. Ideally, all our services should send logs to the same place.
-If you need more details about this process, check out the CrashCourse-API Lesson 4 "C. Using an external logger". 
+In the BlogPost API, we used the Serilog library for logging. Ideally, all our services should send logs to the same place.
+If you need more details about this process, check out the CrashCourse-API Lesson 4 [C. Using an external logger](../../CrashCourse-API/Lesson4#c-using-an-external-logger).  
 
 1. Install `Serilog`, `Serilog.Settings.Configuration`,`Serilog.Sinks.Seq` nuget packages. Add `Serilog.Sinks.Console` if you want the logs to also appear in the console.
 2. Replace `Logging` section in appSettings by : 
@@ -215,7 +215,7 @@ Your logs should now appear in SEQ every seconds:
 
 ![](images/11.png)
 
-If you have multiple service sending data to SEQ, the logs might become difficult to read. 
+If you have multiple services sending data to SEQ, the logs might become difficult to read. 
 You can specific attributes when sending logs, such as the service name: 
 
 6. Add attributes for service name
@@ -378,7 +378,7 @@ namespace RequestReviewProcessor
 
 ### Step 4: Receive messages from the SQS queue
 
-When reading messages from the SQS queue, we will potentially read multiple messages at the same time. As such, we will just iterate on each messages and process them individually. Another characteristics of Amazon SQS is that you need to delete the message explicitly so it is not processed by your worker. 
+When reading messages from the SQS queue, we will potentially read multiple messages at the same time. As such, we will just iterate on each message and process them individually. Another characteristic of Amazon SQS is that you need to delete the message explicitly so it is not processed by your worker. 
 
 The code of the `ExecuteAsync` will look as below. We won't do anything yet with the message. 
 
@@ -429,7 +429,7 @@ protected override async Task ExecuteAsync(CancellationToken stoppingToken)
 }
 ```
 
-> *Note: If you compare with your BlogPostAPI Sender code, you will find that I am not calling `GetAwaiter().GetResult()` and I am passing a `stoppingToken` as parameter of the AWS Library. In my ExecuteAsync method, we can make **async**hronous calls and **await** using the relevant keywords. We can also stop a request half-way through by cancelling it if my application stops for instance. While .NET core will deal with this differently internally, what you see from outside looks the same so I won't discuss it much further there.*
+> *Note: If you compare with your BlogPostAPI Sender code, you will find that I am not calling `GetAwaiter().GetResult()` and I am passing a `stoppingToken` as a parameter of the AWS Library. In my ExecuteAsync method, we can make **async**hronous calls and **await** using the relevant keywords. We can also stop a request halfway through by cancelling it if my application stops for instance. While .NET core will deal with this differently internally, what you see from the outside looks the same so I won't discuss it much further there.*
 
 If you run your application now and messages are available on the queue, you will see the following logs in SEQ:
 
@@ -443,7 +443,7 @@ Now, stop the worker and keep adding some messages by creating blog posts:
 
 ### Step 5: Process the message
 
-Similarly to the layers in the API, we will split the `MessageHandlers` / `Processor` from the main worker. This is to separate different concerns and help unit testing. The Handler does not care which queuing technology is chosen, it could be SQS or another, this will not change the behavior when processing the content of the messages. 
+Similarly to the distinct layers in the API, we will split the `MessageHandlers` / `Processor` from the main worker. This is to separate different concerns and help unit testing. The Handler does not care which queuing technology is chosen, it could be SQS or another, this will not change the behaviour when processing the content of the messages. 
 
 1. Create a folder `Handlers`
 2. Create an interface `IMessageHandler` and a class `MessageHandler` implement the interface (both public)
@@ -507,9 +507,9 @@ The result in SEQ should look like:
 
 Let's do a bit of copy-pasting for the Review API call. 
 
-From Lesson 1, Final folder, copy the content of Post method used to call the Review API [ReviewApiClientService.cs](Lesson1\Final\BlogPost\BlogPostApi\Services\ReviewApiClientService.cs) and paste into `ProcessMessageAsync` of `MessageHandler`.
+From Lesson 1, Final folder, copy the content of Post method used to call the Review API [ReviewApiClientService.cs](../../Lesson1/Final/BlogPost/BlogPostApi/Services/ReviewApiClientService.cs) and paste into `ProcessMessageAsync` of `MessageHandler`.
 
-Copy the namespaces from the `ReviewApiClientService` and append to the ones in `MessageHandler`: CTRL R+G to remove duplicates and broken references. 
+Copy the namespaces from the ReviewApiClientService and append to the ones in MessageHandler: CTRL R+G to remove duplicates and broken references. 
 
 <details>
 <summary>MessageHandler.cs</summary>
@@ -693,7 +693,7 @@ public async Task<bool> ProcessMessageAsync(ReviewRequest request, CancellationT
 
 We now have a dependency between our SQS message Worker and Review API. If the Review API is unavailable, the Worker will just let the message in the queue and retry when the Review API is back online. 
 
-Let's start the Review API solution from the [Lesson1\Prep\Review folder](Lesson1\Prep\Review) and run the API.
+Let's start the Review API solution from the Lesson1 [/Prep/Review folder](../../Lesson1/Prep/Review) and run the API.
 
 Now start the Worker, create few blog posts and check SEQ:
 
@@ -713,6 +713,6 @@ If you restart the Review API, the message should now be processed successfully:
 
 This concludes the Crash Course on inter-process communication. 
 
-In the first lesson we called the Review API from the Blog Post API and explained the technical challenge of direct RPC calls between APIs. In Lesson 2, we used a local Amazon SQS queue to decouple the two APIs. Lastly, we created a background / worker service, that reads the messages from the SQS queue and call the Review API on behalf of the Blog Post API. 
+In the first lesson, we called the Review API from the Blog Post API and explained the technical challenge of direct RPC calls between APIs. In Lesson 2, we used a local Amazon SQS queue to decouple the two APIs. Lastly, we created a background/worker service, that reads the messages from the SQS queue and calls the Review API on behalf of the Blog Post API. 
 
-I hope you learnt tons with this Crash Course! Let me know if any suggestions, feedbacks or issues with this course!
+I hope you learnt tons from this Crash Course! Let me know if any suggestions, feedback or issues!

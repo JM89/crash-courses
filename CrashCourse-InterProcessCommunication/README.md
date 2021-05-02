@@ -2,22 +2,22 @@
 
 ## Audience
 
-New to .NET, New to C#.
+New to .NET, New to C#. 
 
 ## Objective
 
 In the [CrashCourse API](../CrashCourse-API/README.md), we learnt how to build an API from scratch and some basic concept of programming. 
 
-In order to better explain the reasons for using message-based systems, we will first cover the direct communication between two APIs [Lesson 1](../Lesson1/README.md) and its challenges. Then, we will use a SQS queue (localstack in docker) to decouple the two, sending messages from Blog Post API in [Lesson 2](../Lesson2/README.md) and processing those by a background service in [Lesson 3](../Lesson3/README.md).  
+To better explain the reasons for using message-based systems, we will first cover the direct communication between two APIs [Lesson 1](../Lesson1/README.md) and its challenges. Then, we will use an Amazon SQS queue to decouple the two, sending messages from Blog Post API in [Lesson 2](../Lesson2/README.md) and processing those by a background service in [Lesson 3](../Lesson3/README.md).  
 
 By the end of the course, you will have implemented:
-- an API: sending messages to a SQS queue (localstack in docker)
+- an API: sending messages to an Amazon SQS queue (using "localstack" in docker)
 - a background service: reading the messages and calling another API
 
 ## Pre-requisites
 
 * Visual Studio 2019 Community is installed (3.1 SDK installed)
-    - To check your install, run `dotnet --list-sdk` command
+    - To check your install, run the `dotnet --list-sdk` command
     - If another version of the SDK is installed, syntax/template might be different
 * Docker is installed
 * [AWS Cli](https://awscli.amazonaws.com/AWSCLIV2.msi) is installed (and some understanding of Amazon SQS)
@@ -39,7 +39,7 @@ In order to get started quickly and focus on service communication, the ./Lesson
 
 ### Docker Setup 
 
-To start the docker-compose, go to the ./Lesson1/Prep folder and run the following command to start the container in background:
+To start the docker-compose, go to the ./Lesson1/Prep folder and run the following command to start the container in the background:
 
 ```
 docker-compose up -d
@@ -51,10 +51,10 @@ Check SEQ: `http://localhost:5341/#/events` and the SQL Server `localhost,1433` 
 
 Open the solution `/BlogPost/CrashCourseMessaging.BlogPost.Api.sln` and run it.
 
-The same endpoints are available for the Blog Post API using the Postman collection. Couple of changes were made:
+The same endpoints are available for the Blog Post API using the Postman collection. A couple of changes were made:
 - The namespaces were renamed
 - The weather forecast controller was removed
-- The Settings class and Settings section in configuration file were added, and configured in Startup class (ConfigureServices).
+- The Settings class and Settings section in the configuration file was added and configured in the Startup class (ConfigureServices).
 
 ### Review.Api endpoints
 
@@ -97,11 +97,12 @@ public async Task<IActionResult> Post([FromBody] ReviewRequest request, Cancella
 }
 ```
 
-In order to simulate latency and random errors, the Review API contains two configurations used in the GET endpoint (appSettings.json):
+To simulate latency and random errors, the Review API contains two configurations used in the GET endpoint (appSettings.json):
 - InducedFailureRateFactor: number between 0 and 100, represents the percentage of failures happening for a given request.
 - InducedLatencyFactor: min duration in seconds to enforce during the call.
 
 *Note that the endpoint is marked as asynchronous. We will not cover async/await in this crash course.*
 
 As soon as you are familiar with this structure, let's jump to Lesson 1.
+
 

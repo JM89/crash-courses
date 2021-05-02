@@ -1,0 +1,1 @@
+aws sqs create-queue --queue-name request-review-queue --region eu-west-2 --endpoint-url http://localstack:4566

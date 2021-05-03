@@ -17,16 +17,16 @@ public class WeatherForecastController : ControllerBase
 }
 ```
 
-* `[ApiController]` and `[Route("[controller]")]` are called attributes. Attributes associate metadata to a class, information. Here these attributes are used by the ASP.NET Framework to "API Controllers" behaviors to our code. 
-    - ApiController is used by the framework to detect the list of available endpoints accross the project. 
-    - Route is used to build a routing table. If you remember well, our API endpoint was called using `https://localhost:5001/weatherforecast`, the `weatherforecast` is coming from this `[controller]`: which is the name of the controller in lowercase. This is a standard way of doing, you can override this value.
+* `[ApiController]` and `[Route("[controller]")]` are called attributes. Attributes associate metadata to a class, information. Here these attributes are used by the ASP.NET Framework to "API Controllers" behaviours to our code. 
+    - ApiController is used by the framework to detect the list of available endpoints across the project. 
+    - Route is used to build a routing table. If you remember well, our API endpoint was called using `https://localhost:5001/weatherforecast`, the `weatherforecast` is coming from this `[controller]`: which is the name of the controller in lowercase. This is a standard way of doing it, you can override this value.
 * `ControllerBase` is the base class and contains generic methods and properties that would be common to all our API controllers. For instance, this would help you build easily HTTP Responses.
 
 This is a glimpse of `ControllerBase` content: 
 
 ![01](images/01.png)
 
-The next bit of code that interest us in the context of API Controller is this one: 
+The next bit of code that interests us in the context of API Controller is this one: 
 
 ```csharp
 [HttpGet]
@@ -43,7 +43,7 @@ curl -X GET https://localhost:5001/weatherforecast
 ```
 
 * The `[HttpGet]` method attribute is telling ASP.NET Core that this specific C# method is an endpoint to expose and make available for HTTP Requests. 
-* The return type of this method is an `IEnumerable<WeatherForecast>`: which is a list of objects of type "WeatherForecast" (we define its class, in our Models/ folder). Put simple, when the list of objects is returned by this method, the framework will convert it into in a JSON object and wrap it under an HTTP Response. This is why you will have this results displayed when running the CURL command (or in the browser). If you pay attention to the models/WeatherForecast.cs, you will see similarities on the properties displayed. 
+* The return type of this method is an `IEnumerable<WeatherForecast>`: which is a list of objects of type "WeatherForecast" (we define its class, in our Models/ folder). Put simply, when the list of objects is returned by this method, the framework will convert it into a JSON object and wrap it under an HTTP Response. This is why you will have these results displayed when running the CURL command (or in the browser). If you pay attention to the models/WeatherForecast.cs, you will see similarities in the properties displayed. 
 
 ```json
 [
@@ -63,7 +63,7 @@ curl -X GET https://localhost:5001/weatherforecast
 ]
 ```
 
-Finally, you might have recognized the constructor of the `WeatherForecastController` and the `ILogger` field. We will come to the structure of the constructor in a next lesson. 
+Finally, you might have recognized the constructor of the `WeatherForecastController` and the `ILogger` field. We will talk about the structure of the constructor in another lesson. 
 
 ```csharp
 public WeatherForecastController(...)
@@ -76,7 +76,7 @@ Now it is time to take a deep dive into REST API.
 
 ## REST Foundations
 
-There are lots of documentation on the Internet for this that would explain it a lot better, but to keep it short, REST API is a software architectural style to define Web Services in a structured manner. The main idea was to reuse the foundation of HTTP Methods (GET, PUT, POST, DELETE) defined by the HTTP protocol, to describe an API is an easy way. This was also in an effort of designing less complicated web services. Often, an API's job would be to do a certain number of operations such as reading data from a table (or SQL entity) in a database, inserting a row, updating a row using its ID, deleting a row.
+There is a lot of documentation on the Internet, but to keep it short, REST API is a software architectural style to define Web Services in a structured manner. The main idea was to reuse the foundation of HTTP Methods (GET, PUT, POST, DELETE) defined by the HTTP protocol, to describe an API in an easy way. This was also in an effort of designing less complicated web services. Often, an API's job would be to do a certain number of operations such as reading data from a table (or SQL entity) in a database, inserting a row, updating a row using its ID, deleting a row.
 
 | Operations | SQL Operation | HTTP Method |
 |---|---|---|
@@ -91,13 +91,13 @@ So, if we have a table `BlogPost`
 | 1  | Best practices for writing C# code | Long content 1 | 12/01/2021 | John Smith | Software Development | 
 | 2  | How to design a distributed system properly | Long content 2 | 11/01/2021 | Paul Michou | Architecture | 
 
-And you wish to create an API on top to create easily new BlogPost, you would create an `blogpost` GET, POST, PUT, DELETE endpoints that can be called to manage (read, create, update, delete) the entries in your database. 
+And you wish to create an API on top to create easily new BlogPost, you would create a `blogpost` GET, POST, PUT, DELETE endpoints that can be called to manage (read, create, update, delete) the entries in your database. 
 
 ## Create a new controller
 
 **Step 1**: Create an API controller
 
-Back to the solution, we can create a Controller by right clicking on the Controllers folder and Add Controller:
+Back to the solution, we can create a Controller by right-clicking on the Controllers folder and Add Controller:
 ![02](images/02.png)
 
 Choose the "API Controller with read/write actions":
@@ -132,7 +132,7 @@ namespace CrashCourseApi.Web.Models
 }
 ```
 
-Back to the controller, replace the list of strings by a list of BlogPost objects (incl. the missing namespace):
+Back to the controller, replace the list of strings with a list of BlogPost objects (incl. the missing namespace):
 ```csharp
 [HttpGet]
 public IEnumerable<BlogPostResponse> Get()
@@ -157,7 +157,7 @@ public IEnumerable<BlogPostResponse> Get()
 ```
 
 Looking at the next GET endpoint, `Get(int id)`, what would be good is to actually return the right items in this list that we defined. 
-To do this, we will create a static variable in our controller to contain the list (similarly than "summaries" in the )
+To do this, we will create a static variable in our controller to contain the list (similarly to the "summaries" variable in the "weatherforecast" controller).
 
 ```csharp
 private static readonly BlogPostResponse[] blogPosts = new BlogPostResponse[] {
@@ -183,9 +183,9 @@ public BlogPostResponse Get(int id)
     return blogPosts.SingleOrDefault(x => x.Id == id);
 }
 ```
-Linq is a powerful library to manipulate list of objects, we will use it extensively. `SingleOrDefault` method will return the object of your list matching the ID. If it can't find any, null is returned. If it finds more than one, it will throw an exception. 
+Linq is a powerful library to manipulate lists of objects, we will use it extensively. The `SingleOrDefault` method will return the object of your list matching the ID. If it can't find any, null is returned. If it finds more than one, it will throw an exception. 
 
-If you run the application now, you can access to the endpoints by calling
+If you run the application now, you can access the endpoints by calling:
 
 ```bash
 # Get All 
@@ -203,9 +203,9 @@ Let's stop the application and create the POST endpoint to create a new item in 
 **Step 3**: Create a "request" class & update POST method
 
 Few considerations before we start:
-* When we create a new blog post, we would like the CreationDate to be populated for us instead of entering it manually
-* In our system, we use the ID to identify our blog post, so this info should be unique. We will need to throw an error is the ID already exist, alternatively, we can generate this info. 
-* Without this two information, we have a different data model that we pass in request. As a result, we will create a new BlogPostRequest model, that will use in the Post method:
+* When we create a new blog post, we would like the CreationDate to be populated for us instead of entering it manually.
+* In our system, we use the ID to identify our blog post, so this info should be unique. We will need to throw an error if the ID already exists, alternatively, we can generate this info. 
+* Since we do not need ID and CreationDate, we will create a different class for our request: BlogPostRequest. 
 
 ```csharp
 public class BlogPostRequest
@@ -223,9 +223,12 @@ public void Post([FromBody] BlogPostRequest value)
 }
 ```
 
-The FromBody Attribute means that the data will be retrieved from the Body of the HTTP Request. Data can be sent to the server via URL parameters, Headers or Body. The number of URL parameters is limited to a certain number of characters. The Headers are usually describing how the HTTP request is being handled (Authorization header, Content-Type...). The Body will be encrypted when using HTTPs, can be of several content type (such as JSON) and not really limited in size.
+The FromBody Attribute means that the data will be retrieved from the Body of the HTTP Request. Data can be sent to the server via URL parameters, Headers or Body. The number of URL parameters is limited to a certain number of characters. The Headers are usually describing how the HTTP request is being handled (Authorization header, Content-Type...). When using the Body, your data:
+is encrypted when using HTTPS
+can be of a complex content type (such as JSON) 
+is not really limited in size
 
-Add a breakpoint to your POST method and run your application:
+Let's add a breakpoint to your POST method and run your application:
 
 ```bash
 # Create (do nothing for now)
@@ -274,7 +277,7 @@ curl -k -X POST https://localhost:5001/api/blogpost -H "Content-Type: applicatio
 curl -X GET https://localhost:5001/api/blogpost/3
 ```
 
-The list of BlogPost is currently stored in-memory. If the application is restarted, your added item will not be in the list, only the 2 first ones, statically defined in code. We will need to persist the data into a database to keep them. But first, let's finish the 2 other methods. 
+The list of BlogPost is currently stored in memory. If the application is restarted, your added item will not be in the list, only the 2 first ones, statically defined in code. We will need to persist the data into a database to keep them. But first, let's finish the 2 other methods. 
 
 **Step 4**: Update a blog post
 
@@ -334,4 +337,3 @@ curl -X GET https://localhost:5001/api/blogpost
 ```
 
 And this concludes Lesson 2. Next Lesson, we will be persisting the BlogPost into a relational database (using docker for SQL Server).
-

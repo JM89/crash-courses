@@ -2,13 +2,13 @@
 
 Get started by running the docker setup (described in Lesson 3).
 
-In Lesson 4, we tested only the happy scenario. In this lesson, we also have to test the unhappy ones and the number of reasons for failure are many and so is the number of tests to perform. Our API is simple but if you have to modify it, you will want to do regression tests before it reaches production.
+In Lesson 4, we tested only the happy scenario. In this lesson, we will test the unhappy scenarios. There are plenty of reasons for failures to happen. Our API is simple but if you have to modify it heavily, you will want to do regression tests before the new changes reach production.
 
-So far, all the tests we did were manual, from curl or Postman, when the application is running. Manual testing is not just dull, it is also error-prone... If the code has more complex requirements, with different response to test, then automated testing is an essential tool. In addition, this automated testing will be triggered as part of your Continuous Integration (CI) pipeline to enforce a good quality code. 
+So far, all the tests we did were manual, from curl or Postman, when the application is running. Manual testing is not just dull, it is also error-prone... If the code has more complex requirements, with different response to the test, then automated testing is an essential tool. In addition, this automated testing will be triggered as part of your Continuous Integration (CI) pipeline to enforce a good quality code. 
 
 To keep it simple, we will discuss only these two:
-* **Acceptance Tests**: What we did manually. Calling the API and updating the database. But done by another application. There are some testing framework out to help you out. This implies to an accessible database, and for testing your business logic alone, unit testing is preferred. You also need to consider that the database will keep growing if not cleaned of the test data. 
-* **Unit Tests**: Unit Tests test your components / classes as separated unit, by checking inputs and expected/actual outputs of methods. External dependencies (db server) are not going to be tested directly (there will be mocked). These days, unit tests are part of the minimal production application. There are so incorporated in the life of the developer that a development methodology TDD (Test Driven Development) has been built around it, and Code Coverage tools measure code quality based on the number of lines covered by tests. Hence, this has a specific section just for it. 
+* **Acceptance Tests**: What we did manually. Calling the API and updating the database. But done by another application. There is some testing framework out there to help you out. This implies an accessible database, and for testing your business logic alone, unit testing is preferred. You also need to consider that the database will keep growing if not cleaned of the test data. 
+* **Unit Tests**: Unit Tests test your components/classes as separated unit, by checking inputs and expected/actual outputs of methods. External dependencies (DB server) are not going to be tested directly (there will be mocked). These days, unit tests are part of the minimal production application. There are so incorporated in the life of the developer that a development methodology TDD (Test Driven Development) has been built around it, and Code Coverage tools measure code quality based on the number of lines covered by tests. Hence, this has a specific section just for it. 
 
 To fully understand the scope of unit testing, let's implement some business requirements. 
 
@@ -41,11 +41,11 @@ There are several ways of implementing this: for instance, we could
 - parse the content when creating and updating the content and store it in DB. Potentially slower writes. 
 - parse the content on the fly when retrieving the data. Potentially slower reads. 
 
-For this lesson, we implement the later to avoid changing the DB schema. But in real life, the choice of your implementations will depend of other factors (eg. frequent reads, cached reads, presence of db read replicas,...) and require application metrics for smarter decisions.
+For this lesson, we implement the latter to avoid changing the DB schema. But in real life, the choice of your implementations will depend on other factors (eg. frequent reads, cached reads, presence of DB read replicas,...) and require application metrics for smarter decisions.
 
 **Step 2**: refactoring into service layers
 
-In terms of code location, so far, we had everything in the controller, so the requirements would be place between data retrieval and sending back the response. 
+In terms of code location, so far, we had everything in the controller, so the new requirements would be placed between data retrieval and sending back the response. 
 
 ```csharp
 // GET api/<BlogPostController>/5
@@ -74,13 +74,13 @@ public BlogPostResponse Get(int id)
 
 The GET method is quickly going to become complex and similarly to the datastore, we will create a new class. Right now, in order to test our business requirement, the following code forces us to have an actual web server and database in place. Every single attempt to parse the code would result in having to run the app, call the API and debug. 
 
-Usually, Web service (controllers), service (business logic) and datastore (db access) will be splitted. There are many variances, with additional layers and different projects entirely, but these 3 layers are often a minimal requirement for a project to allow proper unit testings. There are often different classes defined for Request, Response and Domain Object, but depending on the number of layers, this could increase. ONION architecture proposes more for instance.
+Usually, Web service (controllers), service (business logic) and datastore (DB access) will be split. There are many variances, with additional layers and different projects entirely, but these 3 layers are often a minimum requirement for a project to allow proper unit testings. There are often different classes defined for Request, Response and Domain Object, but depending on the number of layers, this could increase. ONION architecture proposes more for instance.
 
 ![09](images/09.png)
 
-Another reason for the split is that if we have to change one of the layer (for instance, using NoSql instead of RDBMS), we take the risk of changing something in the web service implementation and do collateral damage. Service layer will be most likely to change because of business requirements. Isolating the service and datastore is needed to be able to replace code without impacting the other layers, as long as the "contract", method signatures, do not change (as a reminder IBlogPostDataStore was our contract for BlogPostDataStore). Another reason for changes, would be to do some refactoring. 
+Another reason for the split is that if we have to change one of the layers (for instance, using NoSql instead of RDBMS or do some refactoring), we take the risk of changing something in the web service implementation and do collateral damage. The Service layer will be most likely to change because of business requirements. By isolating the service and datastore, we can replace some code without impacting the other layers. 
 
-Last but not least, we want each of these "layers" or set of classes (services or datastore) to do a single piece of work (single responsibility principle). The datastore will be in charge of the db connection and handling mapping between class and SQL entities. Service will deal with business logic and dealing with the results provided by the datastore. Controllers will deal with incoming http requests, call the service and outcoming responses. 
+Last but not least, we want each of these "layers" or set of classes (services or datastore) to do a single piece of work (single responsibility principle). The datastore will be in charge of the DB connection and handling mapping between class and SQL entities. Service will deal with business logic and dealing with the results provided by the datastore. Controllers will deal with incoming HTTP requests, call the service and outcoming responses. 
 
 Let's get started:
 - Create a folder "Services"
@@ -99,7 +99,7 @@ public BlogPostService(IBlogPostDataStore blogPostDataStore, ILogger logger)
 }
 ```
 
-- Add the following contract to the `IBlogPostService` interface and implement it in `BlogPostService`. Note that few names have change along the way. 
+- Add the following contract to the `IBlogPostService` interface and implement it in `BlogPostService`. Note that few names have changed along the way. 
 
 ```csharp
 public interface IBlogPostService
@@ -112,7 +112,7 @@ public interface IBlogPostService
 }
 ```
 
-- Move the datastore from the controller to the service. The parse content requirement have now is place in the service method GetById. 
+- Move the datastore from the controller to the service. The parse content requirement should be implemented in the method GetById in the service. 
 
 ```csharp
 public class BlogPostService: IBlogPostService
@@ -222,7 +222,7 @@ public class BlogPostController : ControllerBase
 }
 ```
 
-So far, we created an intermediate layer between controllers and datastore layer and made no other changes. 
+So far, we created an intermediate layer between controllers and the datastore layer and made no other changes. 
 
 Last changes to make it all work. Go to `Startup.cs`, and add the following code near the other configured service.
 
@@ -237,20 +237,20 @@ public void ConfigureServices(IServiceCollection services)
 
 These three instructions "injects" implementations whenever a contract is met.
 - Controllers dependencies are injected by the ASP.NET Core framework. 
-- AddSingleton: will create a single instance and inject the same one everytime the contract `IBlogPostDataStore` is met. 
+- AddSingleton: will create a single instance and inject the same one every time the contract `IBlogPostDataStore` is met. 
 - AddTransient: will create a new instance every time that the contract `IBlogPostService` is met. 
 
-For eg., BlogPostController has a dependency to BlogPostService and an instance of the dependency is injected everytime the constructor is called. For every service instance, the same instance of datastore is being injected.  
+For eg., BlogPostController has a dependency on BlogPostService and an instance of the dependency is injected every time the constructor is called. For every service instance, the same instance of datastore is being injected.  
 
-When it comes to test your controller, you can use the contract to mock your dependencies, allowing you to test your unit in isolation.
+When you test your controller, you can use the contract to mock your dependencies, allowing you to test the "unit" in isolation from the rest.
 
 Run the application to check that the refactoring was successful.
 
-**Step 3**: Add unit test project
+**Step 3**: Add a unit test project
 
 Since it is a rather complex requirement, we are going to proceed by steps and tests our implementation. 
 
-Unit tests will come handy very quickly, but first, we need to create a new project. There are several test frameworks that can be used, we will use XUnit. 
+Unit tests will come in handy very quickly, but first, we need to create a new project. There are several test frameworks that can be used, we will use XUnit. 
 
 Create a new project:
 
@@ -280,7 +280,7 @@ And include your project:
 
 ![07](./images/07.png)
 
-Add `Moq` nuget package
+Add `Moq` NuGet package
 
 Rename UnitTest1.cs to BlogPostServiceTests.cs and copy the following base code:
 
@@ -316,11 +316,11 @@ When running the tests, this should fail:
 
 ![08](./images/08.png)
 
-You can debug your test by right clicking on the test: 
+You can debug your test by right-clicking on the test: 
 
 ![09](./images/09.png)
 
-The test fails because we haven't yet configured the mock so it does not return any object. Replace the test by this one:
+The test fails because we haven't yet configured the mock so it does not return any object. Replace the test with this one:
 
 ```csharp
 [Fact]
@@ -486,9 +486,9 @@ var matches = regex.Matches(content);
 blogPost.Item1.PictureReferences = matches.Select(x => x.Value.Replace("IMG:", ""));
 ```
 
-The point of this exercice was to show how a simple requirement could involve many scenarios,  how unit tests could help develop and test for regression. Imagine having to change the requirement now (eg. add jpeg as well) or refactor the regexp pattern, then, you will be glad to have a safeguard! Feel free to challenge yourself finding a better Regexp for our requirement, or choose a different approach entirely!
+The point of this exercise was to show how a simple requirement could involve many scenarios,  how unit tests could help develop and test for regression. Imagine having to change the requirement now (eg. add jpeg as well) or refactor the regexp pattern, then, you will be glad to have a safeguard! Feel free to challenge yourself to find a better Regexp for our requirement, or choose a different approach entirely!
 
-Final piece of the puzzle, we still need to return this list to the browser:
+The final piece of the puzzle, we still need to return this list to the browser:
 - add a `public IEnumerable<string> PictureReferences { get; set; }` into the BlogPostResponse
 - map the PictureReferences property between BlogPost and BlogPostResponse. 
 

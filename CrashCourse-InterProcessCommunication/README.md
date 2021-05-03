@@ -1,9 +1,5 @@
 # Crash Course: Inter-Process Communication
 
-## Audience
-
-New to .NET, New to C#. 
-
 ## Objective
 
 In the [CrashCourse API](../CrashCourse-API/README.md), we learnt how to build an API from scratch and some basic concept of programming. 
@@ -16,22 +12,18 @@ By the end of the course, you will have implemented:
 
 ## Pre-requisites
 
-* Visual Studio 2019 Community is installed (3.1 SDK installed)
-    - To check your install, run the `dotnet --list-sdk` command
-    - If another version of the SDK is installed, syntax/template might be different
-* Docker is installed
 * [AWS Cli](https://awscli.amazonaws.com/AWSCLIV2.msi) is installed (and some understanding of Amazon SQS)
-* [CrashCourse API](./CrashCourse-API/README.md) completed
 
 ## Lessons
 
 * [Lesson 1: Introduction to services (de)coupling](./Lesson1/README.md)
 * [Lesson 2: Sending messages to a SQS queue](./Lesson2/README.md)
 * [Lesson 3: Receiving & Processing messages from a SQS queue](./Lesson3/README.md)
+* [Lesson 4: Adding application metrics & monitoring [BONUS]](./Lesson4/README.md)
 
 ## Getting started
 
-In order to get started quickly and focus on service communication, the ./Lesson1/Prep folder contains the following items:
+To get started quickly and focus on service communication, the ./Lesson1/Prep folder contains the following items:
 
 * A VisualStudio solution containing our BlogPost API created in the [CrashCourse API Lesson 5](../CrashCourse-API/Lesson5/Final/CrashCourseApi.sln).
 * A VisualStudio solution containing a lightweight Review API containing a single endpoint.
@@ -104,5 +96,3 @@ To simulate latency and random errors, the Review API contains two configuration
 *Note that the endpoint is marked as asynchronous. We will not cover async/await in this crash course.*
 
 As soon as you are familiar with this structure, let's jump to Lesson 1.
-
-

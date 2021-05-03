@@ -1,10 +1,10 @@
 # Lesson 3: Storing data in a relational database and Data Access Layer
 
-In the previous lesson, we created a BlogPost API controller to read, create, update and delete blog posts from a list stored in-memory. When the application stops, the in-memory list is wiped out. Our next lesson focus on persisting the blog post into a database. 
+In the previous lesson, we created a BlogPost API controller to read, create, update and delete blog posts from a list stored in memory. When the application stops, the in-memory list is wiped out. Our next lesson focus on persisting the blog post into a database. 
 
-When choosing a data storage for an API, two main data models are considered at least: RDBMS (Relational Database Management System) or NoSQL. Both models have their pros and cons and are very much in use. Relational DB brings interesting concepts to learn so the Blog Post API will store its data in a RDBMS. Nonetheless, we will isolate the code accessing the data storage into separated classes/interfaces, so it can be replaced without affecting the web controllers if we change our mind. These classes/interfaces are responsible for interacting with a database and are forming the Data Access Layer (DAL). 
+When choosing a data storage solution for an API, two main data models are considered at least: RDBMS (Relational Database Management System) or NoSQL. Both models have their pros and cons and are very much in use. Relational DB brings interesting concepts to learn so the Blog Post API will store its data in a relational database. Nonetheless, we will isolate the code accessing the data storage into separated classes/interfaces, so it can be replaced without affecting the web controllers if we change our mind. These classes/interfaces are responsible for interacting with a database and are forming the Data Access Layer (DAL). 
 
-To simulate a database server, we will use a docker image of SQL Server. The base image is extended to include the initial SQL scripts. We define a `docker-compose.yml` file to define and run the container. Docker, as well as SQL Server, can be the topics of separated courses so we won't go into much details here. 
+To simulate a database server, we will use a docker image of SQL Server. The base image is extended to include the initial SQL scripts. We define a `docker-compose.yml` file to define and run the container. Docker, as well as SQL Server, can be the topics of separated courses so we won't go into many details here. 
 
 **Step 1**: Start your local DB server
 
@@ -40,16 +40,16 @@ If SQL Server Management Studio (SSMS) is installed on your machine, connect to 
 * Username: `sa`
 * Password: `VerySecret1234`
 
-The results should look like:
+The results should look like this:
 ![01](./images/01.png)
 
 Our database is now ready. 
 
 **Step 2**: Prepare the DAL 
 
-So far, the code in the `BlogPostController.cs` class is kept minimal but connecting and interacting with the DB will require more code. As a best coding practice, we want our classes to be responsible of a single task (Single Responsibility Principle) and to allow to change implementations easily (RDBMS vs NoSQL) without too much collateral damage. 
+So far, the code in the `BlogPostController.cs` class is kept minimal but connecting and interacting with the DB will require more code. As a best coding practice, we want our classes to be responsible for a single task (Single Responsibility Principle) and to allow to change implementations easily (RDBMS vs NoSQL) without too much collateral damage. 
 
-As we start decoupling our code, we have to speak briefly of Dependency Injection. DI is a design pattern used to implement IoC (Inversion of Control or Dependency inversion principle. One example of dependency can be found in the WeatherForecastController: ILogger<WeatherForecastController>. Since `ILogger` is in the constructor of our controller, we need this dependency to be created before we create our controller is constructed: this dependency will be intialized and injected into our constructor. 
+As we start decoupling our code, we have to speak briefly of Dependency Injection. DI is a design pattern used to implement IoC (Inversion of Control or Dependency inversion principle. One example of dependency can be found in the WeatherForecastController: ILogger<WeatherForecastController>. Since `ILogger` is in the constructor of our controller, we need this dependency to be created before we create our controller is constructed: this dependency will be initialized and injected into our constructor. 
 
 Let's take a counter-example: we could have implemented the following code for `WeatherForecastController.cs`. We create an instance of type `ConsoleLogger` inside the constructor and assign it to \_logger variable. Logging is something rather popular, so you can expect many classes will have the same code implemented in their constructors. 
 
@@ -59,18 +59,18 @@ public WeatherForecastController() {
 }
 ```
 
-Immediately I deployed my API, I realize that the ConsoleLogger is filling up the drive of the machine rapidly and that the logs need to be externalized to a logging server instead. Now, I need to replace the ConsoleLogger everywhere its has been defined. Using dependency injection, I could have:  
-- changed the implementation on a single location and reduce risk of breaking something in other places
+Immediately after I deployed my API, I realized that the ConsoleLogger is filling up the drive of the machine rapidly and that the logs need to be externalized to a logging server instead. Now, I need to replace the ConsoleLogger everywhere it has been defined. Using dependency injection, I could have:  
+- changed the implementation on a single location and reduce the risk of breaking something in other places
 - switched implementations based on an environment variable without making the code more complex
-- reused the same instance of ILogging to avoid creating a new object everytime
+- reused the same instance of ILogging to avoid creating a new object every time
 - injected a "mock" implementation (instead of the real implementation) to test my controller (See Lesson 5)
 - ...
 
-The setup of services and dependencies is done in the `ConfigureServices` method in `Startup.cs`. C# Interfaces are specially in the context of DI, as they allow to separate the definition of the contracts or what the class should be doing / be responsible for; and the actual implementation. 
+The setup of services and dependencies is done in the `ConfigureServices` method in `Startup.cs`. C# Interfaces are especially in the context of DI, as they allow to separate the definition of the contracts or what the class should be doing/be responsible for; and the actual implementation. 
 
 Without any further waiting, let's get back to our code to create the DAL. 
 
-In "Models" folder, copy the `BlogPostResponse` class and rename file and class `BlogPost`. 
+In "Models" folder, copy the `BlogPostResponse` class and rename the file and class `BlogPost`. 
 
 Next, create a folder `DataStores` in your project.
 
@@ -141,9 +141,9 @@ namespace CrashCourseApi.Web.DataStores
 }
 ```
 
-Similarly to the API controller, we have one method per operations. The differences is on the name chosen, I am chosing a more database-friendly terminology.
+Similarly to the API controller, we have one method per operations. The only difference is the name: I am choosing a more database-friendly terminology.
 
-If we go back to the class now, you will notice that VS isn't specially happy about your class anymore: 
+If we go back to the class now, you will notice that VS isn't especially happy about your class anymore: 
 
 ![03](./images/03.png)
 
@@ -151,9 +151,9 @@ If you follow the instructions and implement the interface, some code will be au
 
 **Step 4**: Define a simple SQL Connection & Commands
 
-The .NET Core Framework proposes `System.Data.SqlClient` library, that we will use at the beginning to describe few concepts. We will then replace it by the [Dapper](https://github.com/StackExchange/Dapper) library in Step 5.
+The .NET Core Framework proposes `System.Data.SqlClient` library, which we will use at the beginning to describe few concepts. We will then replace it with the [Dapper](https://github.com/StackExchange/Dapper) library in Step 5.
 
-To install the library, right click on the project, click "Manage Nuget Packages": 
+To install the library, right-click on the project, click "Manage Nuget Packages": 
 
 ![04](./images/04.png)
 
@@ -225,7 +225,7 @@ public IEnumerable<BlogPostResponse> Get()
 }
 ```
 
-We can build and run the application to test the access to the database
+We can build and run the application to test the database access:
 
 ```
 curl -X GET https://localhost:5001/api/blogpost
@@ -233,17 +233,17 @@ curl -X GET https://localhost:5001/api/blogpost
 
 **Step 5**: Code refactoring
 
-Two improvements can be done to this code before we carry on the features.. We are going:
+Two improvements can be done to this code before we carry on with the features. We are going:
 * to use an ORM to simplify the code
-* to move the connection strings to the appSettings (environment specific variable)
+* to move the connection strings to the appSettings (environment-specific variable)
 
 [Dapper ORM Library](https://github.com/StackExchange/Dapper) is an abstraction of the [System.Data.SqlClient.SqlConnection](https://docs.microsoft.com/en-us/dotnet/api/system.data.sqlclient.sqlconnection?view=dotnet-plat-ext-5.0&viewFallbackFrom=netcore-3.1). ORM stands for Object-relational mapping and is used to map C# Classes and SQL Entities. 
 
 In Oriented Object Programming (OOP), an abstraction handles the complexity of a class or library by hiding unnecessary details from the developer.
 
-C# Classes and SQL Entities can differ in naming, structure or property type, for instance, the identifier of our BlogPost class is called `Id` while the SQL Table defines it as `BlogPostId`. There could be also some differences between the C# types (eg. double) and SQL types (eg. DECIMAL(18,5)). If different team owns the application and the database, you will end up with more than a few differences, each might follow their own standards. The "mapping" can become more complex in this situation. This is common practice to use an ORM to avoid writing a lot of mapping of code. Dapper is one. The Microsoft's favorite is its EntityFramework. NHibernate was quite popular few years back too. 
+C# Classes and SQL Entities can differ in naming, structure or property type, for instance, the identifier of our BlogPost class is called `Id` while the SQL Table defines it as `BlogPostId`. There could be also some differences between the C# types (eg. double) and SQL types (eg. DECIMAL(18,5)). If a different team owns the application and the database, you will end up with more than a few differences, each might follow its own standards. The "mapping" can become more complex in this situation. This is common practice to use an ORM to avoid writing a lot of mapping of code. Dapper is one. Microsoft's favourite is EntityFramework. NHibernate was quite popular a few years back too. 
 
-To start using Dapper, add the nuget package `Dapper`. 
+To start using Dapper, add the NuGet package `Dapper`. 
 
 In the `BlogPostDataStore.cs`, we look another look at the SelectAll method first: 
 
@@ -269,7 +269,7 @@ public IEnumerable<BlogPost> SelectAll()
 }
 ```
 
-We can build and run the application to test the access to the database.
+We can build and run the application to test database access.
 
 ```
 curl -X GET https://localhost:5001/api/blogpost
@@ -281,7 +281,7 @@ Before we update the other endpoints, let's fix this connection string.
 Data Source=localhost,1433;Initial Catalog=CrashCourseDB;User ID=sa;Password=VerySecret1234!
 ```
 
-Right now, the DB connection string is hard-coded: if we need to change the connection string to point to another server, we have to change the code. Instead of defining it in code, we are going to move this to the appSettings file. These connection strings can then be overriden just before deploying onto a production environment. Another reason of not hard-coding it and to define it just before deploying, is that connection string could contain sensitive information such as passwords, and this can never end up into a source control system (such as git).
+Right now, the DB connection string is hard-coded: if we need to change the connection string to point to another server, we have to change the code. Instead of defining it in code, we are going to move this to the appSettings file. These connection strings can then be overridden just before deploying onto a production environment. Another reason for not hard-coding it, is that connection string could contain sensitive information such as passwords, and this should never end up in a source control system (such as git).
 
 In order to pass this configuration into the BlogPostDataStore, we have to do a couple of changes. 
 
@@ -374,7 +374,7 @@ public void Insert(BlogPost blogPost)
     using (var conn = new SqlConnection(_connectionString))
     {
         // BlogPostId will be autogenerated (IDENTITY column)
-        // The 3 parameters @Title, @Content, @CreationDate matches perfectly the properties in BlogPost object so we don't need to specific anything else
+        // The 3 parameters @Title, @Content, @CreationDate matches perfectly the properties in BlogPost object so we don't need to specify anything else
 
         conn.Execute("INSERT INTO BlogPost (Title, Content, CreationDate) VALUES (@Title, @Content, @CreationDate)", blogPost);
         conn.Close();

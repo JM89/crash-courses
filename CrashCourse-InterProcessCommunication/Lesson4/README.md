@@ -1,8 +1,8 @@
 # Lesson 4: Adding application metrics & monitoring [BONUS]
 
-The more services you had into your distributed system, the more difficult it becomes to monitor it through just the logs. Decoupling helps on service scalability, availability and reliability, but it also makes the investigations of issues way harder. Being able to monitor the health of your services becomes primordial in this context. 
+The more services you had into your distributed system, the more difficult it becomes to monitor it through just the logs. Decoupling helps with service scalability, availability and reliability, but it also makes the investigations of issues way harder. Being able to monitor the health of your services becomes primordial in this context. 
 
-You won't be able to prevent all failures from happening, but you can be better equipped to deal with them. Adding application metrics, such as measuring the average duration of calling an API or counting unexpected errors occur, help to define what's a normal behavior from a not-so one, and having a "baseline" to compare against. 
+You won't be able to prevent all failures from happening, but you can be better equipped to deal with them. Adding application metrics, such as measuring the average duration of calling an API endpoint or counting the number of unexpected errors that occur, help to define what's normal behaviour from a not-so one, and having a "baseline" to compare against. 
 
 In this Bonus lesson, we will start all 3 services created/updated in the previous lessons. The ./Prep folder contains everything you need to get started:
 - BlogPost API
@@ -17,7 +17,7 @@ To get started, run the `docker-compose up` command in the ./Prep folder.
 
 [Prometheus](https://prometheus.io/docs/introduction/overview/#architecture) collects application metrics by looking at an `/metrics` endpoint exposed by your applications (targets). The Prometheus server jobs will pull metrics of your targets every x seconds. 
 
-In this lesson, Prometheus will run in a docker contain and all applications will run in local. In an real-life setup where the address IPs of your services might be dynamic, you would need a discovery service mechanism to refresh target's configurations when needed. 
+In this lesson, Prometheus will run in a docker contain and all applications will run locally. In a real-life setup where the address IPs of your services might be dynamic, you would need a discovery service mechanism to refresh the target's configurations when needed. 
 
 The metrics in Prometheus can be queried from the server using [PromQL](https://prometheus.io/docs/prometheus/latest/querying/basics/), but to visualize them in a user-friendly dashboard, you would need a proper tool,
 
@@ -25,7 +25,7 @@ For .NET applications, Prometheus integrates with [AppMetrics](https://www.app-m
 
 If your docker containers are running already, go to http://localhost:9090.
 
-[Grafana](https://grafana.com/docs/grafana/latest/dashboards/?pg=docs) is used for creating dashboards and alerts. The integration with Prometheus is quite simple and an docker image is available for it. 
+[Grafana](https://grafana.com/docs/grafana/latest/dashboards/?pg=docs) is used for creating dashboards and alerts. The integration with Prometheus is quite simple and a docker image is available for it. 
 
 Other data sources are available, amongst DataDog and Amazon CloudWatch.
 
@@ -35,7 +35,7 @@ Check that the Prometheus DataSource was configured properly by clicking on the 
 
 ![](images/01.png)
 
-In this docker setup, Prometheus and Grafana uses  configuration files in ./Docker folder. Check the docker-compose container definitions for more information.
+In this docker setup, Prometheus and Grafana use configuration files defined in the `./Docker` folder. Check the docker-compose container definitions for more information.
 
 When our services will be set up, we will update the `prometheus.yml` file and restart the Prometheus container. 
 
@@ -100,9 +100,9 @@ public IActionResult Get()
 
 If you run the API at this point, nothing happens. 
 
-The metrics data is not pushed to the Console directly but "buffered" in memory. The main reason is that any instructions (such as logging data in console) takes "time", a very small amount here, but still, we do not want to slow down our endpoint for the purpose of monitoring. 
+The metrics data is not pushed to the Console directly but "buffered" in memory. The main reason is that any instructions (such as logging data in console) takes "time", a very small amount here, but still, we do not want to slow down our endpoint for monitoring. 
 
-For the metrics data to be pushed to the console, we need an independent thread. A thread allows to divide a program in multiple running tasks: it will execute in parallel of your main code and let the API available for other requests (in the main thread). Similarly to having a background/hosted service (cf. RequestReviewProcessor), we need a running task in background that deals with pushing the data to the console. Fortunately, the code is much simpler, and we can keep it "inline". 
+For the metrics data to be pushed to the console, we need an independent thread. A thread allows to divide a program into multiple running tasks: it will execute in parallel of your main code and let the API available for other requests (in the main thread). Similarly to having a background/hosted service (cf. RequestReviewProcessor), we need a running task in the background that deals with pushing the data to the console. Fortunately, the code is much simpler, and we can keep it "inline". 
 
 Below the configuration of your appMetrics service, add the following code: 
 
@@ -123,7 +123,7 @@ And when you triggered your endpoint, it will start changing those metrics:
 
 ![](images/03.png)
 
-As you can seem allong with the time of the last request, some statistics are also computed (99th, 95th percentile, mean...). 
+As you can see, along with the time of the last request, some statistics are also computed (99th, 95th percentile, mean...). 
 
 Having the metrics data in the Console makes it as readable as in a logging system and we can't do analyze/visualize them like this. Our Prometheus integration requires that the application exposes an endpoint `/metrics` so let's configure one. 
 
@@ -137,7 +137,7 @@ Having the metrics data in the Console makes it as readable as in a logging syst
 services.AddMetrics(metrics);
 services.AddMetricsEndpoints();
 
-// Writing synchronous calls won't work without changing this global settings:
+// Writing synchronous calls won't work without changing this global setting:
 services.Configure<KestrelServerOptions>(options =>
 {
     options.AllowSynchronousIO = true;
@@ -150,13 +150,13 @@ services.Configure<KestrelServerOptions>(options =>
 app.UseMetricsAllEndpoints();
 ```
 
-4. Run your application and go the metrics endpoint `https://localhost:5001/metrics`
+4. Run your application and go to the metrics endpoint `https://localhost:5001/metrics`
 
 ![](images/04.png)
 
 ### Step 3: Prometheus integration
 
-Now that we exposed a metrics endpoint, we need to convert the format to be readable by Prometheus server. We will use the plain-text output format. 
+Now that we exposed a metrics endpoint, we need to convert the format to be readable by the Prometheus server. We will use the plain-text output format. 
 
 1. Install `App.Metrics.Prometheus` Nuget Package
 2. Reconfigure the metrics root (ConfigureServices method), as `OutputMetrics.AsPrometheusPlainText()`
@@ -168,7 +168,7 @@ var metrics = new MetricsBuilder()
     .Build();
 ```
 
-3. Run your application and go the metrics endpoint `https://localhost:5001/metrics`
+3. Run your application and go to the metrics endpoint `https://localhost:5001/metrics`
 
 ![](images/05.png)
 
@@ -180,9 +180,9 @@ In ConfigureServices, remove `.Report.ToConsole()` and `AppMetricsTaskScheduler`
 
 ### Step 5: Add Metrics Tags
 
-Right now, our metrics does not contain much data to identify which application and endpoint has been called. When you have a lot more metrics coming from different sources, you will have to know the origin of your data. 
+Right now, our metrics do not contain much data to identify which application and endpoint have been called. When you have a lot more metrics coming from different applications, you will have to know the origin of your metrics.
 
-We can add tags to our metrics, which will be used to filter them.
+To do this, we can add tags to our metrics, which will be used to filter them.
 
 We can add Global Tags, such as the ServiceName:
 
@@ -217,7 +217,7 @@ using (var time = _metrics.Measure.Timer.Time(requestTimer, new MetricTags(new s
 }
 ```
 
-The TimerOptions can be a unique static object, reused for all endpoints. By setting it static, we can reduce the size of the code slightly, remove memory allocations and standardize our metrics (always use ms for instance). Also you can add some helper methods since the syntax of app metrics can be a bit curious at first.
+The TimerOptions can be a unique static object, reused for all endpoints. By setting it static, we can reduce the size of the code slightly, remove memory allocations and standardize our metrics (always use ms for instance). Also, you can add a method to simplify the syntax.
 
 ```csharp
 private readonly static TimerOptions _timerOptions = new TimerOptions
@@ -254,7 +254,7 @@ public IActionResult Get(int id)
 
 ### Step 6: Counting Errors
 
-The AppMetrics propose several [metric types](https://www.app-metrics.io/getting-started/metric-types/), but another very common use case is counting errors since this will help detecting service degradation quickly. 
+The AppMetrics propose several [metric types](https://www.app-metrics.io/getting-started/metric-types/), but another very common use case is counting errors since this will help to detect service degradation quickly. 
 
 1. Inject _metrics into the BlogPostDataStore, where we already have some try/catch to handle errors. 
 2. Set a static object CounterOptions
@@ -292,7 +292,7 @@ public IEnumerable<BlogPost> SelectAll()
 }
 ```
 
-4. Counter keeps incrementing so if you wish to know how many errors happened in the last minute, you need to reset the internal counter every minute. You can use a similar AppMetricsTaskScheduler as we had defined for sending the reports to the Console, in the BlogPostDataStore constructor this time. 
+4. Counter keeps incrementing so if you wish to know how many errors happened at the last minute, you need to reset the internal counter every minute. You can use a similar AppMetricsTaskScheduler as we had defined for sending the reports to the Console, in the BlogPostDataStore constructor this time. 
 
 ```csharp
 // Add a scheduler task that will run every minutes to reset the counter
@@ -367,7 +367,7 @@ If you go to Graph (http://localhost:9090/graph) and search for `application_req
 
 ### Step 8: Add a simple Grafana dashboard
 
-By specifying the Prometheus datasource and providing a query, you can create meaningful dashboards. There is a bit of a learning curve on the syntax, but here are two simple examples of what you can do using your Blog Post API metrics. 
+By specifying the Prometheus data source and providing a query, you can create meaningful dashboards. There is a bit of a learning curve on the syntax, but here are two simple examples of what you can do using your Blog Post API metrics. 
 
 To add a dashboard:
 
@@ -385,7 +385,7 @@ With a result looking like this:
 
 ![](images/14.png)
 
-Even if we save the Grafana dashboard, you can lose your changes if the grafana container volumes is destroyed. By exporting your dashboard and placing it into mounted folder, you will ensure that the next time your build your Grafana container, that your dashboard will be initialized too. 
+Even if we save the Grafana dashboard, you can lose your changes if the Grafana container volume is destroyed. By exporting your dashboard and placing it into the mounted folder, you will ensure that the next time your build your Grafana container, that your dashboards will be initialized too. 
 
 To export as JSON, go to settings 
 
@@ -399,7 +399,7 @@ Create a file with `json` extension in `./Docker/grafana/provisioning/dashboards
 
 ### Step 9: Implement Application Metrics in Review API. 
 
-As an exercice, try to implement the following tasks in the Review API by yourself:
+As an exercise, try to implement the following tasks in the Review API by yourself:
 - Configure AppMetrics, a /metrics endpoint with Prometheus output format
 - Add Latency metrics in the Review API endpoints
 - Add a new target to Prometheus server to fetch the /metrics endpoint
@@ -412,9 +412,11 @@ Results:
 
 ##  Setup of AppMetrics in the RequestReviewProcessor Worker
 
-Adding a metrics endpoint in an API was not requiring much work since it was an ASP.NET Core application. For the worker service, that does not expose any http endpoints by design, we have to proceed differently. Prometheus highly recommends to use a pull strategy and we could convert the worker service as an ASP.NET Core project. 
+Adding a metrics endpoint in an API was not requiring much work since it was an ASP.NET Core application. For the worker service, that does not expose any HTTP endpoints by design, we have to proceed differently. Prometheus highly recommends using the pull strategy and we could convert the RequestReviewProcessor service as an ASP.NET Core project. 
 
-Instead we will use the Prometheus Push Gateway ([docker container](https://github.com/prometheus/pushgateway)) to compare the two approaches. AppMetrics will be configured to use a Push-Gateway HTTP endpoint. Be aware of the potential scalability issues with this solution in a real-life project ([When to use Push Gateway](https://prometheus.io/docs/practices/pushing/)).
+Instead, we will use the Prometheus Push Gateway ([docker container](https://github.com/prometheus/pushgateway)) to compare the two approaches. AppMetrics will be configured to use a Push-Gateway HTTP endpoint. 
+
+Be aware of the potential scalability issues with this solution in a real-life project ([When to use Push Gateway](https://prometheus.io/docs/practices/pushing/)).
 
 ### Step 1: Start the Prometheus Push Gateway
 
@@ -443,7 +445,7 @@ var metrics = new MetricsBuilder()
 services.AddSingleton<IMetrics>(metrics);
 ```
 
-3. Create a private variable `IMetrics` and inject in the constructor of the Worker.
+3. Create a private variable of type `IMetrics` and inject it in the constructor of the Worker class.
 
 4. Define `TimerOptions`: 
 
@@ -488,7 +490,7 @@ var metrics = new MetricsBuilder()
     .Build();
 ```
 
-4. Define a task scheduler to send the reports (same code than for the export to the Console)
+4. Define a task scheduler to send the reports (same code as for the export to the Console)
 
 ```csharp
 // Configure a scheduler to send the reports to the Push Gateway endpoint every 10s
@@ -513,7 +515,7 @@ static_configs:
     - targets: ['host.docker.internal:9091']
 ```
 
-Then restart the prometheus docker container:
+Then restart the Prometheus docker container:
 
 ```sh
 docker container restart prometheus
@@ -535,7 +537,7 @@ SQS Message Latency (95th percentile):
 
 ## Monitoring your services
 
-We have now added application metrics for our 3 services! To these, we can obviously add meaningful metrics that will make useful dashboards!
+We have now added application metrics for our 3 services! To these, we can add meaningful metrics that will make useful dashboards!
 
 ![](images/22.png)
 

@@ -23,7 +23,7 @@ By the end of the course, you will have implemented:
 
 ## Getting started
 
-In order to get started quickly and focus on service communication, the ./Lesson1/Prep folder contains the following items:
+To get started quickly and focus on service communication, the ./Lesson1/Prep folder contains the following items:
 
 * A VisualStudio solution containing our BlogPost API created in the [CrashCourse API Lesson 5](../CrashCourse-API/Lesson5/Final/CrashCourseApi.sln).
 * A VisualStudio solution containing a lightweight Review API containing a single endpoint.
@@ -96,5 +96,3 @@ To simulate latency and random errors, the Review API contains two configuration
 *Note that the endpoint is marked as asynchronous. We will not cover async/await in this crash course.*
 
 As soon as you are familiar with this structure, let's jump to Lesson 1.
-
-

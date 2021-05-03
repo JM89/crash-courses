@@ -1,0 +1,63 @@
+version: '3.3'
+
+services:
+
+  sql-server:
+    build: 
+      context: ./Docker/db
+      dockerfile: Dockerfile
+    container_name: sql-server
+    environment:
+      - SA_PASSWORD=VerySecret1234!
+    ports:
+      - "1433:1433"
+
+  seq: 
+    image: datalust/seq
+    container_name: seq
+    environment:
+      - ACCEPT_EULA=Y
+    ports:
+      - "5341:80"
+
+  localstack:
+    image: localstack/localstack
+    container_name: localstack
+    environment:
+      - SERVICES=sqs
+      - DEFAULT_REGION=eu-west-2
+      - HOSTNAME=localstack
+      - AWS_ACCESS_KEY_ID=xxx
+      - AWS_SECRET_ACCESS_KEY=xxx
+      - AWS_DEFAULT_REGION=eu-west-2
+    volumes:
+      - "./docker/localstack-config:/docker-entrypoint-initaws.d"
+    ports:
+      - "4566:4566"
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    restart: unless-stopped
+    volumes:
+      - ./Docker/prometheus:/etc/prometheus/
+      - ./prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    ports:
+      - 9090:9090
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    restart: unless-stopped
+    volumes:
+      - ./Docker/grafana/provisioning:/etc/grafana/provisioning/
+      - ./grafana_data:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=securitymatters123
+    links:
+      - prometheus:prometheus
+    ports:
+      - 3000:3000

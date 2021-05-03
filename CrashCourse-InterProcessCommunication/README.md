@@ -28,6 +28,7 @@ By the end of the course, you will have implemented:
 * [Lesson 1: Introduction to services (de)coupling](./Lesson1/README.md)
 * [Lesson 2: Sending messages to a SQS queue](./Lesson2/README.md)
 * [Lesson 3: Receiving & Processing messages from a SQS queue](./Lesson3/README.md)
+* [Lesson 4: Adding application metrics & monitoring [BONUS]](./Lesson4/README.md)
 
 ## Getting started
 

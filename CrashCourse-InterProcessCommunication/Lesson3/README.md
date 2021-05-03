@@ -435,7 +435,7 @@ If you run your application now and messages are available on the queue, you wil
 
 ![](images/13.png)
 
-If you don't have messages in the queue, start the BlogPostAPI from the previous lesson and create some blog posts. You will see the worker process them as they appear. 
+If you don't have messages in the queue, start the BlogPostAPI from ./Prep folder and create some blog posts. You will see the worker process them as they appear. 
 
 Now, stop the worker and keep adding some messages by creating blog posts:
 - Even if the worker is not available, your BlogPostAPI can still make those requests
@@ -693,7 +693,7 @@ public async Task<bool> ProcessMessageAsync(ReviewRequest request, CancellationT
 
 We now have a dependency between our SQS message Worker and Review API. If the Review API is unavailable, the Worker will just let the message in the queue and retry when the Review API is back online. 
 
-Let's start the Review API solution from the Lesson1 [/Prep/Review folder](../../Lesson1/Prep/Review) and run the API.
+Let's start the Review API solution from the ./Prep folder and run the API.
 
 Now start the Worker, create few blog posts and check SEQ:
 

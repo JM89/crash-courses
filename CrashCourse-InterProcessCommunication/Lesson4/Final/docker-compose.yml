@@ -41,7 +41,6 @@ services:
     restart: unless-stopped
     volumes:
       - ./Docker/prometheus:/etc/prometheus/
-      - ./prometheus_data:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
@@ -54,7 +53,6 @@ services:
     restart: unless-stopped
     volumes:
       - ./Docker/grafana/provisioning:/etc/grafana/provisioning/
-      - ./grafana_data:/var/lib/grafana
     environment:
       - GF_SECURITY_ADMIN_PASSWORD=securitymatters123
     links:

@@ -1,5 +1,6 @@
 ﻿using App.Metrics;
 using App.Metrics.Counter;
+using App.Metrics.Scheduling;
 using BlogPostApi.Models;
 using Dapper;
 using Microsoft.Extensions.Configuration;
@@ -7,6 +8,7 @@ using Serilog;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
+using System.Threading.Tasks;
 
 namespace CrashCourseApi.Web.DataStores
 {
@@ -28,6 +30,14 @@ namespace CrashCourseApi.Web.DataStores
             _connectionString = configuration.GetConnectionString("CrashCourseDb");
             _logger = logger;
             _metrics = metrics;
+
+            var scheduler = new AppMetricsTaskScheduler(
+                TimeSpan.FromMinutes(1),
+                () => {
+                    metrics.Provider.Counter.Instance(_sqlErrorCounterOptions).Reset();
+                    return Task.CompletedTask;
+                });
+           scheduler.Start();
         } 
 
         public bool Delete(int id)

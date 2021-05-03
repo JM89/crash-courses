@@ -11,5 +11,7 @@
         public string QueueName { get; set; }
 
         public string ReviewApiBaseUrl { get; set; }
+
+        public string PushGatewayApiBaseUrl { get; set; }
     }
 }

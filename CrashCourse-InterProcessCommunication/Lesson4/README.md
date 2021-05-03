@@ -107,7 +107,7 @@ For the metrics data to be pushed to the console, we need an independent thread.
 Below the configuration of your appMetrics service, add the following code: 
 
 ```csharp
-// Add a scheduler task that will run every 10s to flush the metrics to the Console
+// Add a scheduler task that will run every 10s to send the report to the Console
 var scheduler = new AppMetricsTaskScheduler(TimeSpan.FromSeconds(10), 
     async () => {
         await Task.WhenAll(metrics.ReportRunner.RunAllAsync());
@@ -292,16 +292,276 @@ public IEnumerable<BlogPost> SelectAll()
 }
 ```
 
+4. Counter keeps incrementing so if you wish to know how many errors happened in the last minute, you need to reset the internal counter every minute. You can use a similar AppMetricsTaskScheduler as we had defined for sending the reports to the Console, in the BlogPostDataStore constructor this time. 
+
+```csharp
+// Add a scheduler task that will run every minutes to reset the counter
+var scheduler = new AppMetricsTaskScheduler(
+    TimeSpan.FromMinutes(1),
+    () => {
+        metrics.Provider.Counter.Instance(_sqlErrorCounterOptions).Reset();
+        return Task.CompletedTask;
+    });
+scheduler.Start();
+```
+
 To simulate a DB outage, stop the docker container for sql-server. The GetAll Blog Post call will fail several seconds (depending on your SQL timeout parameter).
+
+```sh
+docker container stop sql-server
+```
 
 ![](images/08.png)
 
-## Update Prometheus Targets
+Don't forget to restart the SQL Server. 
 
-`host.docker.internal` or --network="host" or create images from docker course?
+```sh
+docker container start sql-server
+```
+
+### Step 7: Register Prometheus Targets
+
+Now that we have our metrics endpoint exposed, let's configure Prometheus to read it. 
+
+In the Docker/prometheus folder, update the `prometheus.yml` file to include the following target:
+
+```yml
+global:
+  scrape_interval:     120s 
+  evaluation_interval: 120s 
+  external_labels:
+      monitor: 'my-project'
+
+rule_files:
+
+scrape_configs:
+  - job_name: 'prometheus'
+    scrape_interval: 120s
+    static_configs:
+      - targets: ['localhost:9090']
+  # This job will check for metrics every 10s
+  - job_name: 'blog-post-api'
+    scrape_interval: 10s
+    scheme: https
+    tls_config:
+      insecure_skip_verify: true
+    static_configs:
+      - targets: ['host.docker.internal:5001']
+```
+
+The Prometheus Service will pull metrics from an endpoint available in your local machine (localhost). Since our docker-compose runs with a bridge network mode by default, if we wish to reference "localhost", we need to specify `host.docker.internal`: there are alternatives that won't be described here. 
+
+The container needs to be restarted to pick up the changes
+
+```sh
+docker container restart prometheus
+```
+
+In the list of targets (http://localhost:9090/targets), you should now see that your application metrics endpoint has been found:
+
+![](images/09.png)
+
+If you go to Graph (http://localhost:9090/graph) and search for `application_request_timer`:
+
+![](images/11.png)
+
+### Step 8: Add a simple Grafana dashboard
+
+By specifying the Prometheus datasource and providing a query, you can create meaningful dashboards. There is a bit of a learning curve on the syntax, but here are two simple examples of what you can do using your Blog Post API metrics. 
+
+To add a dashboard:
+
+![](images/15.png)
+
+Average latency per endpoint:
+
+![](images/12.png)
+
+Count errors (per min): the sum of errors should be taken per minutes `[1m]` since we reset the counter every minute.
+
+![](images/13.png)
+
+With a result looking like this: 
+
+![](images/14.png)
+
+Even if we save the Grafana dashboard, you can lose your changes if the grafana container volumes is destroyed. By exporting your dashboard and placing it into mounted folder, you will ensure that the next time your build your Grafana container, that your dashboard will be initialized too. 
+
+To export as JSON, go to settings 
+
+![](images/16.png)
+
+Then JSON model and copy the JSON:
+
+![](images/17.png)
+
+Create a file with `json` extension in `./Docker/grafana/provisioning/dashboards`.
+
+### Step 9: Implement Application Metrics in Review API. 
+
+As an exercice, try to implement the following tasks in the Review API by yourself:
+- Configure AppMetrics, a /metrics endpoint with Prometheus output format
+- Add Latency metrics in the Review API endpoints
+- Add a new target to Prometheus server to fetch the /metrics endpoint
+- Setup a new Grafana Dashboard for Review API 
+- Make sure you filter the metrics in your dashboard per service using the syntax `application_request_timer{service="Review.Api"}`
+
+Results:
+
+![](images/18.png)
+
+##  Setup of AppMetrics in the RequestReviewProcessor Worker
+
+Adding a metrics endpoint in an API was not requiring much work since it was an ASP.NET Core application. For the worker service, that does not expose any http endpoints by design, we have to proceed differently. Prometheus highly recommends to use a pull strategy and we could convert the worker service as an ASP.NET Core project. 
+
+Instead we will use the Prometheus Push Gateway ([docker container](https://github.com/prometheus/pushgateway)) to compare the two approaches. AppMetrics will be configured to use a Push-Gateway HTTP endpoint. Be aware of the potential scalability issues with this solution in a real-life project ([When to use Push Gateway](https://prometheus.io/docs/practices/pushing/)).
+
+### Step 1: Start the Prometheus Push Gateway
+
+Run the docker container:
+
+```sh
+docker run -d --name prompushgateway -p 9091:9091 prom/pushgateway
+```
+
+For now, the metrics page is blank: http://localhost:9091/
+
+*Note that this is not part of the main docker-compose, so Prometheus will see it as `host.docker.internal`.*
+
+### Step 2: Configure App.Metrics & create measures
+
+1. Install `App.Metrics` nuget package
+2. Configure App.Metrics (in Program.cs)
+
+```csharp
+var metrics = new MetricsBuilder()
+    .Configuration.Configure(opt => {
+        opt.GlobalTags.Add("service", settings.ServiceName);
+    })
+    .Build();
+
+services.AddSingleton<IMetrics>(metrics);
+```
+
+3. Create a private variable `IMetrics` and inject in the constructor of the Worker.
+
+4. Define `TimerOptions`: 
+
+```csharp
+private readonly static TimerOptions _timerOptions = new TimerOptions
+{
+    Name = "sqs messages handling",
+    MeasurementUnit = Unit.Requests,
+    DurationUnit = TimeUnit.Milliseconds,
+    RateUnit = TimeUnit.Milliseconds
+};
+```
+
+5. In the ExecuteAsync code where you iterate through the messages, add the measure timer code checks.
+
+```csharp
+foreach (var message in receiveMessageResponse.Messages)
+{
+    using (var time = _metrics.Measure.Timer.Time(_timerOptions, new MetricTags("action", "process-message")))
+    {
+        // ...
+    }
+}
+```
+
+### Step 3: Configure App.Metrics to send the data to push gateway
+
+1. Install `App.Metrics.Reporting.HTTP` and `App.Metrics.Prometheus`
+2. Add a PushGatewayApiBaseUrl variable in the Settings.cs and appSettings with value `"http://localhost:9091/metrics/job/request-review-processor"`
+3. Configure the report over HTTP
+
+```csharp
+var metrics = new MetricsBuilder()
+    .Configuration.Configure(opt => {
+        opt.GlobalTags.Add("service", settings.ServiceName);
+    })
+    .Report.OverHttp(options =>
+    {
+        options.HttpSettings.RequestUri = new Uri(settings.PushGatewayApiBaseUrl);
+        options.MetricsOutputFormatter = new MetricsPrometheusTextOutputFormatter();
+    }) // Send Metrics to Push Gateway
+    .Build();
+```
+
+4. Define a task scheduler to send the reports (same code than for the export to the Console)
+
+```csharp
+// Configure a scheduler to send the reports to the Push Gateway endpoint every 10s
+var scheduler = new AppMetricsTaskScheduler(TimeSpan.FromSeconds(10),
+    async () => {
+        await Task.WhenAll(metrics.ReportRunner.RunAllAsync());
+    });
+scheduler.Start();
+```
+
+The metrics should now display in Push Gateway (http://localhost:9091):
+
+![](images/19.png)
+
+### Step 4: Update Prometheus Targets
+
+```yml
+- job_name: 'pushgateway'
+scrape_interval: 10s
+scheme: http
+static_configs:
+    - targets: ['host.docker.internal:9091']
+```
+
+Then restart the prometheus docker container:
+
+```sh
+docker container restart prometheus
+```
+
+You should now see some data available for PushGateway! 
+
+![](images/20.png)
+
+Take the habit to filter by job name as there will be a single job looking for all jobs available in push gateway.
+
+### Step 5: Add Grafana Dashboard 
+
+Define a new dashboard for your Worker, for instance:
+
+SQS Message Latency (95th percentile):
+
+![](images/21.png)
+
+## Monitoring your services
+
+We have now added application metrics for our 3 services! To these, we can obviously add meaningful metrics that will make useful dashboards!
+
+![](images/22.png)
+
+This dashboard for our 3 services is available in the Final folder: [final.json](./Final/Docker/grafana/provisioning/dashboards).
+
+To import a dashboard:
+
+![](images/23.png)
+
+Import button:
+
+![](images/24.png)
+
+Copy the JSON file and Load.
+
+![](images/25.png)
 
 ## Conclusion
 
-We have just seen how to add application metrics and provide dashboards to monitor the health of our services. There is commonly a 3rd "pillar" of Observability: Distributed Tracing. 
+This bonus lesson is now completed!
 
-There isn't any course for this yet, but check out the sample code available [here](https://github.com/JM89/test-distributed-tracing) if you are interested. 
+Don't forget to stop all your containers:
+```
+docker-compose down 
+docker container stop prompushgateway
+docker container prune -f
+```
+
+To conclude, we have just seen how to add application metrics and provide dashboards to monitor the health of our services. There is commonly a 3rd "pillar" of Observability: Distributed Tracing. There isn't any course for this yet, but check out the test solution [here](https://github.com/JM89/test-distributed-tracing) if you are interested. 

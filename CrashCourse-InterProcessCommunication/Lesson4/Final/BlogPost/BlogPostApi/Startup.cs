@@ -1,5 +1,6 @@
 using Amazon.SQS;
 using App.Metrics;
+using App.Metrics.Scheduling;
 using BlogPostApi.Services;
 using CrashCourseApi.Web.DataStores;
 using Microsoft.AspNetCore.Builder;
@@ -11,6 +12,7 @@ using Microsoft.Extensions.Hosting;
 using ReviewApi;
 using Serilog;
 using System;
+using System.Threading.Tasks;
 
 namespace BlogPostApi
 {

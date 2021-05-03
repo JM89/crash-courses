@@ -1,9 +1,5 @@
 # Crash Course: Inter-Process Communication
 
-## Audience
-
-New to .NET, New to C#. 
-
 ## Objective
 
 In the [CrashCourse API](../CrashCourse-API/README.md), we learnt how to build an API from scratch and some basic concept of programming. 
@@ -16,12 +12,7 @@ By the end of the course, you will have implemented:
 
 ## Pre-requisites
 
-* Visual Studio 2019 Community is installed (3.1 SDK installed)
-    - To check your install, run the `dotnet --list-sdk` command
-    - If another version of the SDK is installed, syntax/template might be different
-* Docker is installed
 * [AWS Cli](https://awscli.amazonaws.com/AWSCLIV2.msi) is installed (and some understanding of Amazon SQS)
-* [CrashCourse API](./CrashCourse-API/README.md) completed
 
 ## Lessons
 

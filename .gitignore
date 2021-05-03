@@ -349,5 +349,5 @@ MigrationBackup/
 # Ionide (cross platform F# VS Code tools) working folder
 .ionide/
 
-*prometheus_data
-*grafana_data
+*prometheus_data**
+*grafana_data**

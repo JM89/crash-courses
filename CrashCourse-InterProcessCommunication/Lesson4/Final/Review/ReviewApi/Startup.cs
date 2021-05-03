@@ -1,5 +1,7 @@
+using App.Metrics;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -37,6 +39,21 @@ namespace ReviewApi
                     throw new Exception("Invalid Settings");
 
                 services.AddSingleton(_logger);
+
+                var metrics = new MetricsBuilder()
+                    .Configuration.Configure(opt => {
+                        opt.GlobalTags.Add("service", settings.ServiceName);
+                    })
+                    .OutputMetrics.AsPrometheusPlainText()
+                    .Build();
+                services.AddMetrics(metrics);
+                services.AddMetricsEndpoints();
+
+                services.Configure<KestrelServerOptions>(options =>
+                {
+                    options.AllowSynchronousIO = true;
+                });
+
                 services.AddControllers();
             }
             catch(Exception ex)
@@ -61,6 +78,7 @@ namespace ReviewApi
 
                 app.UseAuthorization();
 
+                app.UseMetricsAllEndpoints();
                 app.UseEndpoints(endpoints =>
                 {
                     endpoints.MapControllers();

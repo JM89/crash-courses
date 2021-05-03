@@ -10,10 +10,6 @@ By the end of the course, you will have created a simple REST API in C#, that cr
 
 ## Pre-requisites
 
-* Visual Studio 2019 Community is installed (3.1 SDK installed)
-    - To check your install, run `dotnet --list-sdk` command
-    - If another version of the SDK is installed, syntax/template might be different
-* Docker is installed
 * curl or Postman installed
     - Postman collection to import: [postman_collection.json](./postman_collection.json)
 * At least one "Hello World" C# Tutorial completed

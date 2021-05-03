@@ -1,10 +1,14 @@
 using Amazon.SQS;
+using App.Metrics;
+using App.Metrics.Formatters.Prometheus;
+using App.Metrics.Scheduling;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using RequestReviewProcessor.Handlers;
 using Serilog;
 using System;
+using System.Threading.Tasks;
 
 namespace RequestReviewProcessor
 {
@@ -38,6 +42,26 @@ namespace RequestReviewProcessor
                        {
                            client.BaseAddress = new Uri(settings.ReviewApiBaseUrl);
                        });
+
+                    // Configure App.Metrics
+                    var metrics = new MetricsBuilder()
+                        .Configuration.Configure(opt => {
+                            opt.GlobalTags.Add("service", settings.ServiceName);
+                        })
+                        .Report.OverHttp(options =>
+                        {
+                            options.HttpSettings.RequestUri = new Uri(settings.PushGatewayApiBaseUrl);
+                            options.MetricsOutputFormatter = new MetricsPrometheusTextOutputFormatter();
+                        })
+                        .Build();
+                    services.AddSingleton<IMetrics>(metrics);
+
+                    // Configure a scheduler to send the reports to the Push Gateway endpoint every 10s
+                    var scheduler = new AppMetricsTaskScheduler(TimeSpan.FromSeconds(10),
+                        async () => {
+                            await Task.WhenAll(metrics.ReportRunner.RunAllAsync());
+                        });
+                    scheduler.Start();
 
                     // Configure Background Service
                     services.AddHostedService<Worker>();

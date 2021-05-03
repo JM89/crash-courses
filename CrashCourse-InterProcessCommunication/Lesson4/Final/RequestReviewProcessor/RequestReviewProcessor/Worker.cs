@@ -1,5 +1,7 @@
 using Amazon.SQS;
 using Amazon.SQS.Model;
+using App.Metrics;
+using App.Metrics.Timer;
 using Microsoft.Extensions.Hosting;
 using Newtonsoft.Json;
 using RequestReviewProcessor.Contracts;
@@ -17,13 +19,23 @@ namespace RequestReviewProcessor
         private readonly IAmazonSQS _sqsClient;
         private readonly IMessageHandler _messageHandler;
         private readonly Settings _settings;
+        private readonly IMetrics _metrics;
 
-        public Worker(ILogger logger, Settings settings, IAmazonSQS sqsClient, IMessageHandler messageHandler)
+        private readonly static TimerOptions _timerOptions = new TimerOptions
+        {
+            Name = "sqs messages handling",
+            MeasurementUnit = Unit.Requests,
+            DurationUnit = TimeUnit.Milliseconds,
+            RateUnit = TimeUnit.Milliseconds
+        };
+
+        public Worker(ILogger logger, Settings settings, IAmazonSQS sqsClient, IMessageHandler messageHandler, IMetrics metrics)
         {
             _logger = logger;
             _settings = settings;
             _sqsClient = sqsClient;
             _messageHandler = messageHandler;
+            _metrics = metrics;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -46,20 +58,23 @@ namespace RequestReviewProcessor
                     // For each message received in the batch 
                     foreach (var message in receiveMessageResponse.Messages)
                     {
-                        // Log the message ID
-                        _logger.Information("{ServiceName}: Message {MessageId} received", _settings.ServiceName, message.MessageId);
-
-                        // Deserialize the content of the message
-                        var requestReview = JsonConvert.DeserializeObject<ReviewRequest>(message.Body);
-                        // Pass it through the Process Message method
-                        await _messageHandler.ProcessMessageAsync(requestReview, stoppingToken);
-
-                        // After processing the message, delete it from the queue (otherwise it will be reprocessed)
-                        await _sqsClient.DeleteMessageAsync(new DeleteMessageRequest()
+                        using (var time = _metrics.Measure.Timer.Time(_timerOptions, new MetricTags("action", "process-message")))
                         {
-                            QueueUrl = queueUrl,
-                            ReceiptHandle = message.ReceiptHandle
-                        }, stoppingToken);
+                            // Log the message ID
+                            _logger.Information("{ServiceName}: Message {MessageId} received", _settings.ServiceName, message.MessageId);
+
+                            // Deserialize the content of the message
+                            var requestReview = JsonConvert.DeserializeObject<ReviewRequest>(message.Body);
+                            // Pass it through the Process Message method
+                            await _messageHandler.ProcessMessageAsync(requestReview, stoppingToken);
+
+                            // After processing the message, delete it from the queue (otherwise it will be reprocessed)
+                            await _sqsClient.DeleteMessageAsync(new DeleteMessageRequest()
+                            {
+                                QueueUrl = queueUrl,
+                                ReceiptHandle = message.ReceiptHandle
+                            }, stoppingToken);
+                        }
                     }
 
                     await Task.Delay(1000, stoppingToken);

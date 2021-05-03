@@ -1,13 +1,13 @@
 using Amazon.SQS;
+using App.Metrics;
 using BlogPostApi.Services;
 using CrashCourseApi.Web.DataStores;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Polly;
-using Polly.Extensions.Http;
 using ReviewApi;
 using Serilog;
 using System;
@@ -44,6 +44,21 @@ namespace BlogPostApi
                 services.AddTransient<IReviewRequestSender, ReviewRequestSender>();
                 services.AddSingleton<IBlogPostDataStore, BlogPostDataStore>();
                 services.AddSingleton<IAmazonSQS>(new AmazonSQSClient(new AmazonSQSConfig() { ServiceURL = settings.EndpointUrl }));
+
+                var metrics = new MetricsBuilder()
+                    .Configuration.Configure(opt => {
+                        opt.GlobalTags.Add("service", settings.ServiceName);
+                    })
+                    .OutputMetrics.AsPrometheusPlainText()
+                    .Build();
+
+                services.AddMetrics(metrics);
+                services.AddMetricsEndpoints();
+
+                services.Configure<KestrelServerOptions>(options =>
+                {
+                    options.AllowSynchronousIO = true;
+                });
             }
             catch(Exception ex)
             {
@@ -67,6 +82,7 @@ namespace BlogPostApi
 
                 app.UseAuthorization();
 
+                app.UseMetricsAllEndpoints();
                 app.UseEndpoints(endpoints =>
                 {
                     endpoints.MapControllers();

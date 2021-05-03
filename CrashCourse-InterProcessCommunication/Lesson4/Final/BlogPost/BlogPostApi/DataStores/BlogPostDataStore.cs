@@ -1,4 +1,6 @@
-﻿using BlogPostApi.Models;
+﻿using App.Metrics;
+using App.Metrics.Counter;
+using BlogPostApi.Models;
 using Dapper;
 using Microsoft.Extensions.Configuration;
 using Serilog;
@@ -14,11 +16,18 @@ namespace CrashCourseApi.Web.DataStores
         private readonly ILogger _logger;
         private readonly string TemplateException = "Database exception when calling {DataStore} {Method}";
         private readonly string DataStore = nameof(BlogPostDataStore);
+        private readonly IMetrics _metrics;
 
-        public BlogPostDataStore(IConfiguration configuration, ILogger logger)
+        private readonly static CounterOptions _sqlErrorCounterOptions = new CounterOptions() {
+            MeasurementUnit = Unit.Errors,
+            Name = "sql-errors"
+        };
+
+        public BlogPostDataStore(IConfiguration configuration, ILogger logger, IMetrics metrics)
         {
             _connectionString = configuration.GetConnectionString("CrashCourseDb");
             _logger = logger;
+            _metrics = metrics;
         } 
 
         public bool Delete(int id)
@@ -32,6 +41,7 @@ namespace CrashCourseApi.Web.DataStores
                 }
                 catch (Exception ex)
                 {
+                    _metrics.Measure.Counter.Increment(_sqlErrorCounterOptions);
                     _logger.Error(ex, TemplateException, DataStore, "Delete");
                     return false;
                 }
@@ -55,6 +65,7 @@ namespace CrashCourseApi.Web.DataStores
                 }
                 catch (Exception ex)
                 {
+                    _metrics.Measure.Counter.Increment(_sqlErrorCounterOptions);
                     _logger.Error(ex, TemplateException, DataStore, "Insert");
                     return (-1, false);
                 }
@@ -76,6 +87,7 @@ namespace CrashCourseApi.Web.DataStores
                 }
                 catch (Exception ex)
                 {
+                    _metrics.Measure.Counter.Increment(_sqlErrorCounterOptions);
                     _logger.Error(ex, TemplateException, DataStore, "SelectAll");
                 }
                 finally
@@ -99,6 +111,7 @@ namespace CrashCourseApi.Web.DataStores
                 }
                 catch (Exception ex)
                 {
+                    _metrics.Measure.Counter.Increment(_sqlErrorCounterOptions);
                     _logger.Error(ex, TemplateException, DataStore, "SelectById");
                     result = false;
                 }
@@ -121,6 +134,7 @@ namespace CrashCourseApi.Web.DataStores
                 }
                 catch (Exception ex)
                 {
+                    _metrics.Measure.Counter.Increment(_sqlErrorCounterOptions);
                     _logger.Error(ex, TemplateException, DataStore, "SelectById");
                     return false;
                 }

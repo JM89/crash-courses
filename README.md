@@ -1,6 +1,6 @@
 # Crash-Courses (.NET)
 
-These crash courses are aimed at an audience with a technical background but no prior experience in C#/.NET/OOP, who wishes to understand better software engineering.
+These crash courses are aimed at an audience with a technical background but no prior experience in C#/.NET/OOP, who wishes to understand better software engineering. 
 
 ## Pre-requisites
 
@@ -20,6 +20,8 @@ The concepts, methodologies, architecture patterns are unveiled progressively an
 |---|---|---|---|---|
 |1| [API](./CrashCourse-API/README.md) | REST API <br/>Layered-Architecture <br/> RDBMS/NoSQL <br/> Model Validation <br/> Error Handling (Try/Catch) <br/> Unit-Testing <br/> Dependency Injection <br/> | Docker <br/> SQL Server <br/> SEQ | ASP.NET Core <br/> System.Data.SqlClient <br/> Serilog |
 |2| [Inter-Process Communication](./CrashCourse-InterProcessCommunication/README.md) | Microservices/Monoliths <br/> Distributed Systems<br/> Service decoupling <br/> Worker service <br/> Few OOP Concepts | Docker <br/> SEQ <br/> Localstack <br/> AWS SQS <br/> Prometheus <br/> Grafana <br/> | System.Net.Http <br/> Serilog <br/> Polly <br/> AWSSDK.SQS <br/> App.Metrics |
+|3| [Application Lifecycle Management](./CrashCourse-ApplicationLifecycleManagement/README.md)|Continuous Integration<br/>Continuous Deployment<br/> Containerisation & Orchestration<br/>|Makefile<br/>TeamCity<br/>Octopus<br/>Docker<br/>|-|
+|4| Application Modernization (TO COME) ||||
 
 Most lessons contain:
 - a `./Prep` folder that brings docker dependencies and optionally some VS solutions for the lesson. 

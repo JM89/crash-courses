@@ -1,0 +1,64 @@
+version: '3.1'
+
+services:
+
+  octopus-db:
+    image: mcr.microsoft.com/mssql/server
+    container_name: octopus-db
+    environment:
+      SA_PASSWORD: Password123!
+      ACCEPT_EULA: Y
+    ports:
+      - 1433:1433
+    healthcheck:
+      test: [ "CMD", "/opt/mssql-tools/bin/sqlcmd", "-U", "sa", "-P", "${SA_PASSWORD}", "-Q", "select 1"]
+      interval: 10s
+      retries: 10
+
+  octopus-server:
+    container_name: octopus-server
+    image: octopusdeploy/octopusdeploy:2021.1
+    privileged: false
+    environment:
+      ACCEPT_EULA: Y
+      DB_CONNECTION_STRING: Server=octopus-db,1433;Database=OctopusDeploy;User=sa;Password=Password123!
+      ADMIN_USERNAME: admin
+      ADMIN_PASSWORD: securitymatters123
+      ADMIN_EMAIL: jm89.tests@gmail.com
+      MASTER_KEY: pLNu5te7HZZcGGiqAT+FOA==
+      DISABLE_DIND: Y
+    ports:
+      - 8080:8080
+      - 11111:10943
+    depends_on:
+      - octopus-db
+
+  test-environment:
+    container_name: test-environment
+    build:
+      context: .
+      dockerfile: ./test-environment/Dockerfile
+    ports:
+      - 22:22
+
+  teamcity:
+    container_name: teamcity
+    image: jetbrains/teamcity-server:2021.2.3
+    ports:
+      - "8112:8111"
+    volumes:
+      - ./teamcity/data:/data/teamcity_server/datadir
+
+  teamcity-agent-1:
+    container_name: teamcity-agent-1 
+    build:
+      context: .
+      dockerfile: ./teamcity-agent/Dockerfile
+    privileged: true
+    restart: always
+    environment:
+      - AGENT_NAME="Agent 1"
+      - SERVER_URL=http://teamcity:8111
+      - DOCKER_IN_DOCKER=start
+    depends_on:
+      - teamcity

@@ -1,0 +1,24 @@
+version: '3.1'
+
+services:
+  teamcity:
+    container_name: teamcity
+    image: jetbrains/teamcity-server:2021.2.3
+    ports:
+      - "8112:8111"
+    volumes:
+      - ./teamcity/data:/data/teamcity_server/datadir
+
+  teamcity-agent-1:
+    container_name: teamcity-agent-1 
+    build:
+      context: .
+      dockerfile: ./teamcity-agent/Dockerfile
+    privileged: true
+    restart: always
+    environment:
+      - AGENT_NAME="Agent 1"
+      - SERVER_URL=http://teamcity:8111
+      - DOCKER_IN_DOCKER=start
+    depends_on:
+      - teamcity
